@@ -16,7 +16,7 @@
 ```
 api/
 ├── api.py               # FastAPI, CORS Middleware
-├── classifiers/         # Naive-Bayes, KNN, K-Means Logic
+├── classifiers/         # Naive-Bayes, KNN, K-Means
 ├── schemas/             # Pydantic Models
 ├── routes/              # API Endpoints
 └── data/                
