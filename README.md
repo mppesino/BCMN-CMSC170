@@ -15,7 +15,7 @@
 ## File Structure
 ```
 api/
-├── api.py               # FastAPI, CORS Middleware, router inclusion
+├── api.py               # FastAPI, CORS Middleware
 ├── classifiers/         # Naive-Bayes, KNN, K-Means Logic
 ├── schemas/             # Pydantic Models
 ├── routes/              # API Endpoints
