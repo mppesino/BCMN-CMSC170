@@ -1,4 +1,4 @@
-﻿# Pokelytics: a State-of-the-Art AI-powered Pokedex! 🔥💧🌿⚡   
+﻿# Pokelytics: a State-of-the-Art AI-powered Pokedex! <br /> 🔥💧🌿⚡   
 **⋆˚꩜｡ By Olan, Pabico, Pesino, and Regala | CMSC 170 - W2L ˚꩜｡** <br /><br />
 **૮₍´｡ᵔ ꈊ ᵔ｡`₎ა**
 <br /><br />
