@@ -15,7 +15,8 @@
 ## Dataset
 - Raw data on the [Ultimate Pokemon Dataset (2026)](https://www.kaggle.com/datasets/darkmatternet/ultimate-pokmon-dataset-2025)
 - Some features were dropped due to irrelevance to the program goals
-- One Hot Encoding was employed for categorical data with binning of infrequent categories data into "other" category (minimum frequency: 5)
+- One Hot Encoding was employed for categorical data with binning of infrequent categories into "other" category (minimum frequency: 5)
+- Rows were shuffled as the raw data listing is ordered by pokedex_id
 
 ## File Structure
 ```
