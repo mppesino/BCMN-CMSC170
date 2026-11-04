@@ -6,16 +6,22 @@ done on the original raw dataset (pokemon.csv)
 
 import csv
 import re
+import random
+
+from data import Data
 
 RAW_FILE = "pokemon.csv"
 CATEGORICAL_COLUMNS = ["type_1","ability_1","hidden_ability","color","shape"] 
 MIN_FREQUENCY = 5
+SEED = 10
 TARGET = "type_1"
 # Note: Target does not need to be One Hot Encoded for Naive Bayes and K-Nearest Neighbors
 # Target MUST be One Hot Encoded for K-Clustering
 
 class Preprocessor:
     def __init__(self):
+
+        self.data_utils = Data()
 
         self.data = self.load_csv(RAW_FILE)
 
@@ -25,7 +31,8 @@ class Preprocessor:
         self.raw_header = self.build_header_lookup(self.data)
         self.unique_cats = self.get_unique_categories(self.data)
         self.one_hot_data = self.one_hot_encoding(self.data)
-        self.save_csv(self.one_hot_data, "pokemon_onehot.csv")
+        self.save_csv(self.shuffle_data(self.one_hot_data), "pokemon_onehot.csv")
+        self.save_csv(self.shuffle_csv("pokemon_onehot_min5_keep_type.csv"), "pokemon_onehot_keep_type.csv")
 
     def build_header_lookup(self, data:list):
         header = {}
@@ -45,6 +52,17 @@ class Preprocessor:
                     row_clean.append(clean)
                 data.append(row_clean)
             return data
+
+    def shuffle_csv(self, filename: str):
+        random.seed(SEED)
+        data = self.data_utils.load_csv(filename)
+        random.shuffle(data)
+        return data
+
+    def shuffle_data(self, data: list):
+        random.seed(SEED)
+        random.shuffle(data)
+        return data
 
     def get_unique_categories(self, data:list):
         counts = {}
