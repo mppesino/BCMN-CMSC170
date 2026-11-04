@@ -1,6 +1,11 @@
+'''
+preprocess.py 
+Holds all functions related to the preprocessing 
+done on the original raw dataset (pokemon.csv)
+'''
+
 import csv
 import re
-import numpy
 
 RAW_FILE = "pokemon.csv"
 CATEGORICAL_COLUMNS = ["type_1","ability_1","hidden_ability","color","shape"] 
@@ -12,7 +17,6 @@ TARGET = "type_1"
 class Preprocessor:
     def __init__(self):
 
-        
         self.data = self.load_csv(RAW_FILE)
 
         self.n_rows = len(self.data)
