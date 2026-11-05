@@ -14,6 +14,8 @@ class KNNclassifier:
         self.X_test = []
         self.Y_test = []
 
+        self.pokemon_names = []
+
     #load the data from the CSV file and convert the features to be used in the KNN algorithm in the form of a list of floats
     def load_data(self, filename):
         data = []
@@ -65,6 +67,7 @@ class KNNclassifier:
                 if column.startswith("is_ability_") or column.startswith("is_shape_") or column.startswith("is_color_"):
                     pokemon_features.append(row[column])
 
+            self.pokemon_names.append(row["name"])
             self.X_test.append(pokemon_features)
             self.Y_test.append(row["type_1"])
 
@@ -175,7 +178,7 @@ class KNNclassifier:
         print("\nIncorrect Classifications:")
 
         for i in incorrect_predictions:
-            print("Actual:", self.Y_test[i], "Predicted:", predictions[i])
+            print("Pokémon:", self.pokemon_names[i], "| Actual:", self.Y_test[i], "| Predicted:", predictions[i])
 
 
 classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
