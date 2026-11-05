@@ -22,6 +22,11 @@ class Data:
                 data.append(new_row)
             return data
 
+    def save_csv(self, data: list, outfile: str):
+        with open(outfile, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerows(data)
+
     # build_header_lookup()
         # given a 2D array, takes the first row and generates an index lookup table
     # returns: dict with indices of each column header label ex. {0: "pokemon_name", 1: "type_1"...}
