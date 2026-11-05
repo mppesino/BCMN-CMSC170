@@ -7,17 +7,16 @@ class KMeans:
     # DETEMRINISTIC KMEANS
     NUMERIC_FEATURES = (
         "hp", "attack", "defense", "sp_attack", "sp_defense", "speed", 
-        "height_m", "weight_kg"
+        "height_m", "weight_kg",
+        "is_hidden_ability", "ability_1"
         )
 
     EXCLUDED_COLUMNS = {"pokedex_id", "name", "type_1"}
 
-    def __init__(self, k = 5, max_iterations: int = 100):
-        if not isinstance(k, int) or k < 2:
-            raise ValueError("k must be a positive integer >= 2")
+    def __init__(self, max_iterations: int = 100):
         if not isinstance(max_iterations, int) or max_iterations < 1:
             raise ValueError("max_iterations must be a positive integer >= 1")
-        self.k = k
+        self.k = 4
         self.max_iterations = max_iterations
         self.dataset_path = Path(__file__).resolve().parent.parent / "data" / "pokemon_onehot_keep_type.csv"
         self.names = []
@@ -27,6 +26,7 @@ class KMeans:
         self.centroids = None
         self.assignments = None
         self.clusters = []
+        self.top_entries = []
         self.iterations = 0
         self.converged = False
         self.silhouette_score = None
@@ -120,6 +120,34 @@ class KMeans:
             previous = assignments.copy()
 
         self.clusters = [np.flatnonzero(self.assignments == j).tolist() for j in range(self.k)]
+        self.top_entries = []
+
+        for j, cluster in enumerate(self.clusters):
+            # Calculate each Pokemon's distance to its centroid
+            ranked_indices = sorted(
+                cluster,
+                key=lambda i: self.euclidean_distance(
+                    self.features[i],
+                    self.centroids[j]
+                )
+            )
+
+            top_five = []
+
+            for i in ranked_indices[:5]:
+                distance = self.euclidean_distance(
+                    self.features[i],
+                    self.centroids[j]
+                )
+
+                top_five.append({
+                    "name": self.names[i],
+                    "type": self.types[i],
+                    "cluster": j + 1,
+                    "distance": float(distance)
+                })
+
+            self.top_entries.append(top_five)
         self.silhouette_score = self.calculate_silhouette()
 
         return self
@@ -208,9 +236,44 @@ class KMeans:
 
         with output.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
-            writer.writerow([self.silhouette_score])
             writer.writerow(["name", "type_1", "cluster"])
             for name, kind, cluster in zip(self.names, self.types, self.assignments):
                 writer.writerow([name, kind, int(cluster) + 1])
 
         return output
+
+
+def main():
+    print("Starting K-Means clustering...")
+    print(f"Number of clusters: {KMeans().k}")
+    print("Features: Numerical")
+
+    model = KMeans()
+    model.fit()
+
+    print(f"\nSilhouette Score: {model.silhouette_score:.4f}")
+
+    print("\nTOP 5 POKEMON PER CLUSTER")
+    print("(Ranked by distance to centroid)")
+
+    for j, entries in enumerate(model.top_entries):
+        print(f"\nCLUSTER {j + 1}")
+        print(f"Total Pokemon: {len(model.clusters[j])}")
+        print("-" * 60)
+
+        for rank, pokemon in enumerate(entries, start=1):
+            print(
+                f"{rank}. {pokemon['name']} "
+                f"| Type: {pokemon['type']} "
+                f"| Distance: {pokemon['distance']:.4f}"
+            )
+
+    print("\nSaving cluster assignments...")
+    output = model.save_assignments()
+    print(f"Saved to: {output}")
+
+    print("\nK-Means completed successfully!")
+
+
+if __name__ == "__main__":
+    main()
