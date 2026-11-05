@@ -10,7 +10,7 @@ import random
 
 from data import Data
 
-RAW_FILE = "pokemon.csv"
+RAW_FILE = "raw_data/pokemon.csv"
 CATEGORICAL_COLUMNS = ["type_1","ability_1","hidden_ability","color","shape"] 
 MIN_FREQUENCY = 5
 SEED = 10
@@ -28,11 +28,11 @@ class Preprocessor:
         self.n_rows = len(self.data)
         self.n_cols = len(self.data[0])  
 
-        self.raw_header = self.build_header_lookup(self.data)
-        self.unique_cats = self.get_unique_categories(self.data)
-        self.one_hot_data = self.one_hot_encoding(self.data)
-        self.save_csv(self.shuffle_data(self.one_hot_data), "pokemon_onehot.csv")
-        self.save_csv(self.shuffle_csv("pokemon_onehot_min5_keep_type.csv"), "pokemon_onehot_keep_type.csv")
+        #self.raw_header = self.build_header_lookup(self.data)
+        #self.unique_cats = self.get_unique_categories(self.data)
+        #self.one_hot_data = self.one_hot_encoding(self.data)
+        self.save_csv(self.shuffle_data(self.data), "pokemon_categorical.csv")
+        #self.save_csv(self.shuffle_csv("pokemon_onehot_min5_keep_type.csv"), "pokemon_onehot_keep_type.csv")
 
     def build_header_lookup(self, data:list):
         header = {}
