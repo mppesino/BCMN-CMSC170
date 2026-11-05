@@ -15,12 +15,22 @@ def main():
         help="Number of clusters"
     )
 
+    parser.add_argument(
+        "--features",
+        type=str,
+        default="all",
+        choices=["all", "battle", "numeric"],
+        help="Feature group for clustering"
+    )
     args = parser.parse_args()
 
     print("Starting K-Means clustering...")
     print(f"Number of clusters: {args.k}")
 
-    model = KMeans(k=args.k)
+    model = KMeans(
+        k=args.k,
+        feature_mode=args.features
+    )
 
     model.fit()
 
