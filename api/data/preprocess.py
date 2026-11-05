@@ -10,7 +10,8 @@ import random
 
 from data import Data
 
-RAW_FILE = "pokemon.csv"
+# DO NOT CHANGE THESE PARAMETERS!!
+RAW_FILE = "raw_data/pokemon.csv"
 CATEGORICAL_COLUMNS = ["type_1","ability_1","hidden_ability","color","shape"] 
 MIN_FREQUENCY = 5
 SEED = 10
@@ -28,17 +29,53 @@ class Preprocessor:
         self.n_rows = len(self.data)
         self.n_cols = len(self.data[0])  
 
-        self.raw_header = self.build_header_lookup(self.data)
-        self.unique_cats = self.get_unique_categories(self.data)
-        self.one_hot_data = self.one_hot_encoding(self.data)
-        self.save_csv(self.shuffle_data(self.one_hot_data), "pokemon_onehot.csv")
-        self.save_csv(self.shuffle_csv("pokemon_onehot_min5_keep_type.csv"), "pokemon_onehot_keep_type.csv")
+        #self.raw_header = self.data_utils.build_header_lookup(self.data)
+        #self.unique_cats = self.get_unique_categories(self.data)
+        #self.one_hot_data = self.one_hot_encoding(self.data)
+        #self.data_utils.save_csv(self.shuffle_data(self.data), "pokemon_categorical.csv")
+        #self.data_utils.save_csv(self.shuffle_csv("pokemon_onehot_min5_keep_type.csv"), "pokemon_onehot_keep_type.csv")
 
-    def build_header_lookup(self, data:list):
-        header = {}
-        for j, row in enumerate(data[0]):
-                header[j] = row
-        return header
+        self.data_utils.save_csv(self.convert_to_other("pokemon_onehot.csv", "pokemon_categorical.csv"), "pokemon_categorical_binning.csv")
+
+    def convert_to_other(self, onehot: str, cat: str):
+            onehot_data = self.data_utils.load_csv(onehot)
+            cat_data = self.data_utils.load_csv(cat)
+
+            ability_present = []
+            hidden_present = []
+
+            ab_col = "ability_1"
+            hid_col = "hidden_ability"
+
+            header_lookup = self.data_utils.build_header_lookup(cat_data)
+
+            for label in onehot_data[0]:
+                if "is_ability_1_" in label and "other" not in label:
+                    clean = re.sub(r'is_ability_1_', "", label)
+                    ability_present.append(clean)
+                if "is_hidden_ability_" in label and "other" not in label:
+                    clean = re.sub(r'is_hidden_ability_', "", label)
+                    hidden_present.append(clean)
+
+            for i, row in enumerate(cat_data):
+                if i == 0:
+                    continue
+
+                for j, val in enumerate(row):
+                    if header_lookup[j] != ab_col and header_lookup[j] != hid_col:
+                        continue
+
+                    if header_lookup[j] == "ability_1":
+                        if val not in ability_present:
+                            cat_data[i][j] = "other"
+
+                    if header_lookup[j] == "hidden_ability":
+                        if val not in hidden_present:
+                            cat_data[i][j] = "other"
+
+            return cat_data
+                
+
  
     def load_csv(self, filename: str):
         with open(filename, newline='') as csvfile:
