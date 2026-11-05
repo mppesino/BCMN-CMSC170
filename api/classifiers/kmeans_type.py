@@ -182,27 +182,12 @@ class KMeans:
             return 0.0
         return sum(t == p for t, p in zip(y_true, y_pred)) / len(y_true)
 
-    @staticmethod
-    def macro_f1(y_true, y_pred):
-        # Unweighted mean of per-class F1 over every class seen in y_true or y_pred.
-        labels = sorted(set(y_true) | set(y_pred))
-        f1s = []
-        for label in labels:
-            tp = sum(t == label and p == label for t, p in zip(y_true, y_pred))
-            fp = sum(t != label and p == label for t, p in zip(y_true, y_pred))
-            fn = sum(t == label and p != label for t, p in zip(y_true, y_pred))
-            precision = tp / (tp + fp) if tp + fp else 0.0
-            recall = tp / (tp + fn) if tp + fn else 0.0
-            f1s.append(2 * precision * recall / (precision + recall) if precision + recall else 0.0)
-        return float(np.mean(f1s))
-
     def evaluate(self, indices):
         y_true = [self.types[i] for i in indices]
         y_pred = self.predict(indices)
         correct = sum(t == p for t, p in zip(y_true, y_pred))
         return {
             "accuracy": self.accuracy(y_true, y_pred),
-            "macro_f1": self.macro_f1(y_true, y_pred),
             "correct": correct,
             "incorrect": len(y_true) - correct,
             "y_true": y_true,
@@ -318,19 +303,19 @@ class KMeans:
         return output
 
 
-def select_k(base, train_idx, candidates=(18, 36, 54, 72, 90, 108)):
-    # Choose k by validation macro-F1 on a slice of TRAIN (test stays untouched).
+def select_k(train_idx, candidates=(18, 36, 54, 72, 90, 108)):
+    # Choose k by validation accuracy on a slice of TRAIN (test stays untouched).
     inner_n = int(len(train_idx) * 0.80)
     inner_train, val_idx = train_idx[:inner_n], train_idx[inner_n:]
 
-    best_k, best_f1 = None, -1.0
+    best_k, best_acc = None, -1.0
     for k in candidates:
         if k > len(inner_train):
             continue
         m = KMeans(k=k).fit(inner_train)
-        score = m.evaluate(val_idx)["macro_f1"]
-        if score > best_f1:
-            best_k, best_f1 = k, score
+        acc = m.evaluate(val_idx)["accuracy"]
+        if acc > best_acc:
+            best_k, best_acc = k, acc
     return best_k
 
 
@@ -346,7 +331,7 @@ def main():
     print("Training instances:", len(train_idx))
     print("Testing instances:", len(test_idx))
 
-    best_k = select_k(base, train_idx)
+    best_k = select_k(train_idx)
 
     # Final model: refit on the full train set, evaluate on test once.
     model = KMeans(k=best_k).fit(train_idx)
@@ -356,8 +341,7 @@ def main():
     print("k =", model.k)
     print("\nCorrect Predictions:", test_result["correct"])
     print("Incorrect Predictions:", test_result["incorrect"])
-    print("Classification Accuracy:", round(test_result["accuracy"] * 100, 2), "%")
-    print("Macro F1:", round(test_result["macro_f1"], 4))
+    print("Classification Accuracy:", test_result["accuracy"] * 100, "%")
 
     print("\nIncorrect Classifications:")
     model.print_incorrect(test_idx, test_result)
