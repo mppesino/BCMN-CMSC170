@@ -10,6 +10,7 @@ import random
 
 from data import Data
 
+# DO NOT CHANGE THESE PARAMETERS!!
 RAW_FILE = "raw_data/pokemon.csv"
 CATEGORICAL_COLUMNS = ["type_1","ability_1","hidden_ability","color","shape"] 
 MIN_FREQUENCY = 5
