@@ -18,6 +18,7 @@ class Evaluator():
 
         else:
             print("None")
+        print("\nIncorrect Classifications ^ \n")
 
     def print_dataset_metrics(self, total_data, n_training_data, n_classify_data):
         print("\nDataset Metrics:\n")
