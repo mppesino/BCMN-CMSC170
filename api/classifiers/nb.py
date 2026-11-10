@@ -195,7 +195,7 @@ class NaiveBayes:
 
         self.evaluator.print_incorrect(incorrect_predictions)
 
-        self.evaluator.print_dataset_metrics(self.total_word_count,self.train_data_wcnt, self.classify_data_wcnt)
+        self.evaluator.print_dataset_metrics(self.total_word_count-1,self.train_data_wcnt-1, self.classify_data_wcnt)
         print(f"Smoothing Factor: {self.smooth}\n")
         self.evaluator.print_accuracy(correct_predictions, total_predictions)
 
