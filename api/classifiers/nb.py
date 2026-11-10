@@ -1,5 +1,6 @@
 import csv
 from pathlib import Path
+from evaluator import Evaluator
 
 '''
 This file contains the Naive Bayes algorithm for Pokelytics.
@@ -28,6 +29,8 @@ class NaiveBayes:
         self.category_word_totals = {}
         self.class_counts = {}
         self.smooth = smooth
+
+        self.evaluator = Evaluator()
 
         if self.data is None:
             self.generate_csv()
@@ -184,28 +187,17 @@ class NaiveBayes:
                 correct_predictions += 1
             else:
                 incorrect_predictions.append({
+                    'id': row[0].strip(),
                     'pokemon': row[1].strip(),
                     'actual': actual,
                     'predicted': predicted,
                 })
 
-        #For Computing the accuracy of the Algorithm
-        accuracy = (correct_predictions / total_predictions) * 100
-        print(f"Total Data Count: {self.total_word_count}")
-        print(f"Training Data Count: {self.train_data_wcnt}")
-        print(f"Classify Data Count: {self.classify_data_wcnt} \n")
-        print(f"Smoothing Factor: {self.smooth}\n\n")
+        self.evaluator.print_incorrect(incorrect_predictions)
 
-        print(f"No. of Correct Predictions: {correct_predictions}")
-        print(f"No. of Incorrect Predictions: {total_predictions - correct_predictions}")
-        print(f"Classification Acc%: {accuracy:.2f}% \n\n")
-        print("Incorrect Classifications:")
-        if incorrect_predictions:
-            for item in incorrect_predictions:
-                print(f"Pokemon: {item['pokemon']} | Actual: {item['actual']} | Predicted: {item['predicted']}")
-        else:
-            print("None")
-
+        self.evaluator.print_dataset_metrics(self.total_word_count,self.train_data_wcnt, self.classify_data_wcnt)
+        print(f"Smoothing Factor: {self.smooth}\n")
+        self.evaluator.print_accuracy(correct_predictions, total_predictions)
 
 if __name__ == "__main__":
     try:

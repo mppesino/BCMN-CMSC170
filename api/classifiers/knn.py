@@ -1,5 +1,6 @@
 
 import csv
+from evaluator import Evaluator
 
 class KNNclassifier:
 
@@ -15,6 +16,13 @@ class KNNclassifier:
         self.Y_test = []
 
         self.pokemon_names = []
+        self.pokemon_ids = []
+
+        self.len_data = 0
+        self.len_train_data = 0
+        self.len_test_data = 0
+
+        self.evaluator = Evaluator()
 
     #load the data from the CSV file and convert the features to be used in the KNN algorithm in the form of a list of floats
     def load_data(self, filename):
@@ -68,13 +76,14 @@ class KNNclassifier:
                     pokemon_features.append(row[column])
 
             self.pokemon_names.append(row["name"])
+            self.pokemon_ids.append(row["pokedex_id"])
+
             self.X_test.append(pokemon_features)
             self.Y_test.append(row["type_1"])
 
-        print("\nData set loaded successfully.")
-        print("Total numbers of records:", len(data))
-        print("Training instances:", len(training_data))
-        print("Testing instances:", len(test_data))
+        self.len_data = len(data)
+        self.len_train_data = len(training_data)
+        self.len_test_data = len(test_data)
 
     #compute the Minkowski distance between two points
     def minkowski(self, p1, p2, p):
@@ -162,28 +171,29 @@ class KNNclassifier:
             if prediction == self.Y_test[i]:
                 correct += 1
             else:
-                incorrect_predictions.append(i)
+                incorrect_predictions.append({
+                    'id': self.pokemon_ids[i],
+                    'pokemon': self.pokemon_names[i],
+                    'actual': self.Y_test[i],
+                    'predicted': predictions[i],
+                })
 
         total = len(self.Y_test)
-        incorrect = total - correct
-        accuracy = (correct / total) * 100
+
+        self.evaluator.print_incorrect(incorrect_predictions)
 
         print("\nKNN Classification Results")
         print("k =", k)
         print("p =", p)
-        print("\nCorrect Predictions:", correct)
-        print("Incorrect Predictions:", incorrect)
-        print("Classification Accuracy:", accuracy, "%")
 
-        print("\nIncorrect Classifications:")
+        self.evaluator.print_dataset_metrics(self.len_data, self.len_train_data, self.len_test_data)
+        self.evaluator.print_accuracy(correct, total)
 
-        for i in incorrect_predictions:
-            print("Pokémon:", self.pokemon_names[i], "| Actual:", self.Y_test[i], "| Predicted:", predictions[i])
 
 
 classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
 
-data = classifier.load_data("BCMN-CMSC170/api/data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
+data = classifier.load_data("../data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
 
 classifier.build_training_and_test_sets(data) #build the training and test sets from the loaded data
 
