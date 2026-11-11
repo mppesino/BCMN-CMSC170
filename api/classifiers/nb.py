@@ -1,5 +1,7 @@
 import csv
 from pathlib import Path
+
+import numpy as np
 from evaluator import Evaluator
 
 '''
@@ -29,7 +31,6 @@ class NaiveBayes:
         self.category_word_totals = {}
         self.class_counts = {}
         self.smooth = smooth
-
         self.evaluator = Evaluator()
 
         if self.data is None:
@@ -171,6 +172,7 @@ class NaiveBayes:
         total_predictions = 0
         correct_predictions = 0
         incorrect_predictions = []
+        all_predictions = []
 
         for row in self.classify_data:
             if not row or row[0] == 'pokedex_id':
@@ -181,27 +183,59 @@ class NaiveBayes:
 
             predicted = max(probabilities, key=probabilities.get)
             actual = str(row[2]).strip().lower()
+            all_predictions.append({
+                'actual': actual,
+                'predicted': predicted,
+            })
             is_correct = predicted == actual
             total_predictions += 1
             if is_correct:
                 correct_predictions += 1
             else:
                 incorrect_predictions.append({
-                    'id': row[0].strip(),
                     'pokemon': row[1].strip(),
                     'actual': actual,
                     'predicted': predicted,
                 })
+        #For Computing the accuracy of the Algorithm
+        accuracy = (correct_predictions / total_predictions) * 100
+        print(f"Total Data Count: {self.total_word_count}")
+        print(f"Training Data Count: {self.train_data_wcnt}")
+        print(f"Classify Data Count: {self.classify_data_wcnt} \n")
+        print(f"Smoothing Factor: {self.smooth}\n\n")
 
+        print(f"No. of Correct Predictions: {correct_predictions}")
+        print(f"No. of Incorrect Predictions: {total_predictions - correct_predictions}")
+        print(f"Classification Acc%: {accuracy:.2f}% \n\n")
+        print("Incorrect Classifications:")
+        if incorrect_predictions:
+            for item in incorrect_predictions:
+                print(f"Pokemon: {item['pokemon']} | Actual: {item['actual']} | Predicted: {item['predicted']}")
+        else:
+            print("None")
 
-        self.evaluator.print_incorrect(incorrect_predictions)
+        self.evaluator.print_incorrect([
+            {
+                'id': idx + 1,
+                'pokemon': item['pokemon'],
+                'actual': item['actual'],
+                'predicted': item['predicted'],
+            }
+            for idx, item in enumerate(incorrect_predictions)
+        ])
+
+        confusion_matrix = self.evaluator.save_type_confusion_matrix(all_predictions, label="Naive Bayes")
+        mini_trix = self.evaluator.save_type_mini_trix_dictionary(all_predictions)
+        self.evaluator.print_type_mini_trix_dictionary(mini_trix)
 
         print("\nNaive Bayes Classification Results")
         print(f"Smoothing Factor: {self.smooth}")
 
-        self.evaluator.print_dataset_metrics(self.total_word_count-1,self.train_data_wcnt-1, self.classify_data_wcnt)
+        self.evaluator.print_dataset_metrics(self.total_word_count, self.train_data_wcnt, self.classify_data_wcnt)
         self.evaluator.print_accuracy(correct_predictions, total_predictions)
+        return confusion_matrix, mini_trix
 
+# For running nb.py for testing
 if __name__ == "__main__":
     try:
         smoothing = float(input("Enter smoothing factor: "))

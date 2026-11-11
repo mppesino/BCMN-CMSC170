@@ -2,9 +2,8 @@ import csv
 from collections import Counter
 from pathlib import Path
 
-from evaluator import Evaluator
-
 import numpy as np
+from evaluator import Evaluator
 
 class KMeans: 
     # DETEMRINISTIC KMEANS
@@ -37,6 +36,7 @@ class KMeans:
         self.history = []
         self.correct_count = 0
         self.incorrect = []
+        self.predictions = []
 
         self.evaluator = Evaluator()
 
@@ -121,9 +121,14 @@ class KMeans:
 
         self.correct_count = 0
         self.incorrect = []
+        self.predictions = []
 
         for id, name, actual, c in zip(self.test_ids, self.test_names, self.test_types, predicted_clusters):
             predicted = self.cluster_types[c]
+            self.predictions.append({
+                "actual": actual,
+                "predicted": predicted,
+            })
             if predicted == actual:
                 self.correct_count += 1
             else:
@@ -313,6 +318,9 @@ class KMeans:
 
 
         self.evaluator.print_incorrect(self.incorrect)
+        confusion_matrix = self.evaluator.save_type_confusion_matrix(self.predictions, label="K-Means")
+        mini_trix = self.evaluator.save_type_mini_trix_dictionary(self.predictions)
+        self.evaluator.print_type_mini_trix_dictionary(mini_trix)
 
         print("\nK-Means Classification Results")
         print(f"k = {self.k}")
@@ -322,6 +330,7 @@ class KMeans:
 
         self.evaluator.print_dataset_metrics(total, len(self.names), len(self.test_names))
         self.evaluator.print_accuracy(self.correct_count, len(self.test_names))
+        return confusion_matrix, mini_trix
 
 if __name__ == "__main__":
     classifier = KMeans()

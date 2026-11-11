@@ -1,5 +1,6 @@
 
 import csv
+import numpy as np
 from evaluator import Evaluator
 
 class KNNclassifier:
@@ -157,6 +158,7 @@ class KNNclassifier:
 
         correct = 0
         predictions = []
+        all_predictions = []
         incorrect_predictions = []
 
         for i in range(len(self.X_test)):
@@ -167,6 +169,10 @@ class KNNclassifier:
             )
 
             predictions.append(prediction)
+            all_predictions.append({
+                'actual': self.Y_test[i],
+                'predicted': prediction,
+            })
 
             if prediction == self.Y_test[i]:
                 correct += 1
@@ -181,6 +187,9 @@ class KNNclassifier:
         total = len(self.Y_test)
 
         self.evaluator.print_incorrect(incorrect_predictions)
+        confusion_matrix = self.evaluator.save_type_confusion_matrix(all_predictions, label="KNN")
+        mini_trix = self.evaluator.save_type_mini_trix_dictionary(all_predictions)
+        self.evaluator.print_type_mini_trix_dictionary(mini_trix)
 
         print("\nKNN Classification Results")
         print("k =", k)
@@ -188,13 +197,15 @@ class KNNclassifier:
 
         self.evaluator.print_dataset_metrics(self.len_data, self.len_train_data, self.len_test_data)
         self.evaluator.print_accuracy(correct, total)
+        return confusion_matrix, mini_trix
 
 
 
-classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
+if __name__ == "__main__":
+    classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
 
-data = classifier.load_data("../data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
+    data = classifier.load_data("../data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
 
-classifier.build_training_and_test_sets(data) #build the training and test sets from the loaded data
+    classifier.build_training_and_test_sets(data) #build the training and test sets from the loaded data
 
-classifier.run_knn() #perform the KNN classification on the test set and print the results
+    classifier.run_knn() #perform the KNN classification on the test set and print the results
