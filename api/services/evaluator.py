@@ -5,14 +5,14 @@ class Evaluator():
     def print_incorrect(self, incorrect:list):
         id = "ID"
         pokemon_title = "Pokemon"
-        actual = "Predicted Type"
-        predicted = "Actual Type"
+        predicted = "Predicted Type"
+        actual = "Actual Type"
         print("\nIncorrect Classifications: \n")
         if incorrect:
             print(f"{id:<5}{pokemon_title:<30}{predicted:<30}{actual:<30}")
             print("-----------------------------------------------------------------------------------")
             for pokemon in incorrect:
-                print(f"{pokemon['id']:<5}{pokemon['pokemon']:<30}{pokemon['actual']:<30}{pokemon['predicted']:<30}")
+                print(f"{pokemon['id']:<5}{pokemon['pokemon']:<30}{pokemon['predicted']:<30}{pokemon['actual']:<30}")
             print("-----------------------------------------------------------------------------------")
             print(f"{id:<5}{pokemon_title:<30}{predicted:<30}{actual:<30}")
 
