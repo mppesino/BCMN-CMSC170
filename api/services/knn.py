@@ -5,7 +5,8 @@ from evaluator import Evaluator
 class KNNclassifier:
 
     #initialize the KNN classifier with k and p values
-    def __init__(self, k, p):
+    def __init__(self, train:list=None, test:list=None, k:int=3, p:int=1):
+        self.data = data
         self.k = k
         self.p = p
 

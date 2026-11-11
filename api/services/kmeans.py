@@ -16,11 +16,15 @@ class KMeans:
 
     EXCLUDED_COLUMNS = {"pokedex_id", "name", "type_1"}
 
-    def __init__(self, max_iterations: int = 100):
+    def __init__(self, train:list=None, test:list=None, k:int=18*3, max_iterations:int=100):
+
         if not isinstance(max_iterations, int) or max_iterations < 1:
             raise ValueError("max_iterations must be a positive integer >= 1")
-        
-        self.k = 18*3
+
+        if not isinstance(k, int) or max_iterations <= 1:
+            raise ValueError("clusters must be a positive integer > 1")
+
+        self.k = k
         self.max_iterations = max_iterations
         self.dataset_path = Path(__file__).resolve().parent.parent / "data" / "pokemon_onehot_keep_type.csv"
         self.names = []

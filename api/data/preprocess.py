@@ -8,7 +8,7 @@ import csv
 import re
 import random
 
-from data import Data
+from api.services.data import Data
 
 # DO NOT CHANGE THESE PARAMETERS!!
 RAW_FILE = "raw_data/pokemon.csv"

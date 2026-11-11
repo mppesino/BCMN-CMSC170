@@ -40,4 +40,4 @@ class Evaluator():
 
         print(f"{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
         print(f"{correct:<15}{incorrect:<15}{total:<15}{str(round(self.get_accuracy(correct,total),2))+"%":<15}")
-
+ 
