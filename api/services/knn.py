@@ -98,6 +98,34 @@ class KNNClassifier:
 
         return self.predict_type(neighbors)
 
+    def evaluate_accuracy(self, evaluator:Evaluator):
+        correct = 0
+        predictions = []
+        incorrect_predictions = []
+
+        for i in range(len(self.X_test)):
+            prediction = self.knn(
+                self.X_test[i],
+                self.k,
+                self.p
+            )
+
+            predictions.append(prediction)
+
+            if prediction == self.Y_test[i]:
+                correct += 1
+            else:
+                incorrect_predictions.append({
+                    'id': self.pokemon_ids[i],
+                    'pokemon': self.pokemon_names[i],
+                    'actual': self.Y_test[i],
+                    'predicted': predictions[i],
+                })
+
+        total = len(self.Y_test)
+        return evaluator.get_accuracy(correct, total)
+
+
     #main function to run the KNN classifier, prompts the user for values of k and p, and computes the classification accuracy on the test set
     def classify(self, evaluator:Evaluator, print_incorrect:bool = False):
 

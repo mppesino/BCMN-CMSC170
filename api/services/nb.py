@@ -115,6 +115,32 @@ class NaiveBayes:
         return self.unique_cats_NB
 
     #MAIN
+    def evaluate_accuracy(self, evaluator:Evaluator):
+        total_predictions = 0
+        correct_predictions = 0
+        incorrect_predictions = []
+
+        for row in self.test_data:
+            row_words = self.get_words(row)
+            probabilities = self.bayes_theorem(row_words)
+            self.unique_cats_NB = probabilities
+
+            predicted = max(probabilities, key=probabilities.get)
+            actual = str(row[2]).strip().lower()
+            is_correct = predicted == actual
+            total_predictions += 1
+            if is_correct:
+                correct_predictions += 1
+            else:
+                incorrect_predictions.append({
+                    'id': row[0].strip(),
+                    'pokemon': row[1].strip(),
+                    'actual': actual,
+                    'predicted': predicted,
+                })
+
+        return evaluator.get_accuracy(correct_predictions, total_predictions)
+  
     def classify(self, evaluator:Evaluator, print_incorrect:bool=False):
         total_predictions = 0
         correct_predictions = 0

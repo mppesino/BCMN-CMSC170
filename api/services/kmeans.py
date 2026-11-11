@@ -223,6 +223,10 @@ class KMeans:
         self.generate_train_test(train, test, lookup)
         self.fit()
 
+    def evaluate_accuracy(self, evaluator:Evaluator):
+        self.evaluate()
+        return evaluator.get_accuracy(self.correct_count, self.len_test_data)
+    
     def classify(self, evaluator: Evaluator, print_incorrect:bool = False):
         self.evaluate()
         #self.evaluate_clusters()
