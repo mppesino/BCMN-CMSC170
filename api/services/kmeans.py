@@ -1,32 +1,29 @@
-import csv
 from collections import Counter
-from pathlib import Path
 
 from evaluator import Evaluator
 
 import numpy as np
 
-class KMeans: 
-    # DETEMRINISTIC KMEANS
-    NUMERIC_FEATURES = (
-        "hp", "attack", "defense", "sp_attack", "sp_defense", "speed", 
-        "height_m", "weight_kg",
-        "is_hidden_ability", "ability_1"
-        )
+NUMERIC_FEATURES = (
+    "hp", "attack", "defense", "sp_attack", "sp_defense", "speed",
+    "height_m", "weight_kg",
+    "is_hidden_ability", "ability_1"
+    )
 
-    EXCLUDED_COLUMNS = {"pokedex_id", "name", "type_1"}
+EXCLUDED_COLUMNS = {"pokedex_id", "name", "type_1"}
 
-    def __init__(self, train:list=None, test:list=None, k:int=18*3, max_iterations:int=100):
+class KMeans:
+
+    def __init__(self, k:int=18*3, max_iterations:int=100):
 
         if not isinstance(max_iterations, int) or max_iterations < 1:
             raise ValueError("max_iterations must be a positive integer >= 1")
 
-        if not isinstance(k, int) or max_iterations <= 1:
+        if not isinstance(k, int) or k <= 1:
             raise ValueError("clusters must be a positive integer > 1")
 
         self.k = k
         self.max_iterations = max_iterations
-        self.dataset_path = Path(__file__).resolve().parent.parent / "data" / "pokemon_onehot_keep_type.csv"
         self.names = []
         self.types = []
         self.feature_names = []
@@ -34,81 +31,68 @@ class KMeans:
         self.centroids = None
         self.assignments = None
         self.clusters = []
+        self.cluster_types = []
         self.top_entries = []
         self.iterations = 0
         self.converged = False
         self.silhouette_score = None
-        self.history = []
         self.correct_count = 0
         self.incorrect = []
 
-        self.evaluator = Evaluator()
+        self.test_features = None
+        self.test_ids = []
+        self.test_names = []
+        self.test_types = []
 
-    def load_dataset(self):
-        # Load preprocessed CSV and standardize continuous numeric columns.
-        with self.dataset_path.open(newline="", encoding="utf-8-sig") as handle:
-            reader = csv.DictReader(handle)
-            if not reader.fieldnames:
-                raise ValueError("CSV does not have a header")
-            
-            header = reader.fieldnames
-            excluded = self.EXCLUDED_COLUMNS
-            
-            self.feature_names = [
-                name for name in header
-                if name not in excluded and name != "type_1"
-            ]
-            
-            if not self.feature_names:
-                raise ValueError("No numeric features found")
-            records = list(reader)
+        self.len_data = 0
+        self.len_train_data = 0
+        self.len_test_data = 0
 
-        if self.k > len(records):
-            raise ValueError(f"k={self.k} exceeds the number of Pokémon ({len(records)})")
+    def generate_train_test(self, train: list, test: list, lookup: dict):
+        self.feature_names = [name for name in lookup if name not in EXCLUDED_COLUMNS]
+        feature_idx = [lookup[name] for name in self.feature_names]
+
+        if not self.feature_names:
+            raise ValueError("No numeric features found")
+        if self.k > len(train):
+            raise ValueError(f"k={self.k} exceeds the number of training Pokémon ({len(train)})")
         if self.k < 18:
             raise ValueError(f"k={self.k} must be greater than or equal to number of Pokemon types (18)")
 
-        all_ids = [row["pokedex_id"] for row in records]
-        all_names = [row["name"] for row in records]
-        all_types = [row.get("type_1", "") for row in records]
+        type_idx = lookup["type_1"]
+        name_idx = lookup["name"]
+        id_idx = lookup["pokedex_id"]
 
         try:
-            features = np.array(
-                [[float(row[col]) for col in self.feature_names] for row in records],
-                dtype=float,
-            )
-        except (ValueError, TypeError, KeyError) as exc:
+            train_features = np.array([[float(row[i]) for i in feature_idx] for row in train], dtype=float)
+            test_features = np.array([[float(row[i]) for i in feature_idx] for row in test], dtype=float)
+        except (ValueError, TypeError, IndexError) as exc:
             raise ValueError(f"Dataset has an invalid numeric feature: {exc}") from exc
 
-        if not np.isfinite(features).all():
+        if not (np.isfinite(train_features).all() and np.isfinite(test_features).all()):
             raise ValueError("Dataset contains NaN or infinite feature values")
 
-        split = int(0.7 * len(records))
-        train_idx = np.arange(split)
-        test_idx = np.arange(split, len(records))
-
-        for col in self.NUMERIC_FEATURES:
+        # standardize using training statistics only
+        for col in NUMERIC_FEATURES:
             if col in self.feature_names:
                 j = self.feature_names.index(col)
-                mean = features[train_idx, j].mean()
-                std = features[train_idx, j].std()
-                features[:, j] = (features[:, j] - mean) / std if std else 0.0
+                mean = train_features[:, j].mean()
+                std = train_features[:, j].std()
+                train_features[:, j] = (train_features[:, j] - mean) / std if std else 0.0
+                test_features[:, j] = (test_features[:, j] - mean) / std if std else 0.0
 
-        self.features = features[train_idx]
-        self.names = [all_names[i] for i in train_idx]
-        self.types = [all_types[i] for i in train_idx]
+        self.features = train_features
+        self.names = [row[name_idx] for row in train]
+        self.types = [row[type_idx] for row in train]
 
-        self.test_features = features[test_idx]
-        self.test_ids = [all_ids[i] for i in test_idx]
-        self.test_names = [all_names[i] for i in test_idx]
-        self.test_types = [all_types[i] for i in test_idx]
+        self.test_features = test_features
+        self.test_ids = [row[id_idx] for row in test]
+        self.test_names = [row[name_idx] for row in test]
+        self.test_types = [row[type_idx] for row in test]
 
-        return self.features
-
-    @staticmethod
-    def euclidean_distance(document, centroid):
-        # Distance between two Pokémon feature vectors.
-        return float(np.linalg.norm(np.asarray(document) - np.asarray(centroid)))
+        self.len_data = len(train) + len(test)
+        self.len_train_data = len(train)
+        self.len_test_data = len(test)
 
     def label_clusters(self):
         # Assign each cluster its most common type (ties go to the type seen first).
@@ -117,6 +101,36 @@ class KMeans:
             counts = Counter(self.types[i] for i in cluster)
             labels.append(counts.most_common(1)[0][0] if counts else "")
         return labels
+
+    def fit(self):
+        # Fit the K-means model to the training data.
+        points = self.features
+        self.centroids = points[:self.k].copy()
+        previous = None
+        self.converged = False
+
+        for iteration in range(1, self.max_iterations + 1):
+            # squared distance gives same nearest centroid as Euclidean distance
+            squared_distances = np.sum((points[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
+            assignments = np.argmin(squared_distances, axis=1)
+
+            self.iterations = iteration
+            self.assignments = assignments
+
+            if previous is not None and np.array_equal(assignments, previous):
+                self.converged = True
+                break
+
+            for j in range(self.k):
+                members = points[assignments == j]
+
+                if len(members):
+                    self.centroids[j] = members.mean(axis=0)
+
+            previous = assignments.copy()
+
+        self.clusters = [np.flatnonzero(self.assignments == j).tolist() for j in range(self.k)]
+        self.cluster_types = self.label_clusters()
 
     def evaluate(self):
         # Assign each test Pokémon to its nearest centroid and predict that cluster's type
@@ -138,195 +152,84 @@ class KMeans:
                     "predicted": predicted,
                 })
 
-        self.test_accuracy = self.correct_count / len(self.test_types)
-        return self.test_accuracy
-
-    def fit(self):
-        # Fit the K-means model to the dataset.
-        if self.features is None:
-            self.load_dataset()
-
-        points = self.features
-        self.centroids = points[:self.k].copy()
-        previous = None
-        self.history = []
-        self.converged = False
-
-        for iteration in range(1, self.max_iterations + 1):
-            # squared distance gives same nearest centroid as Euclidean distance
-            squared_distances = np.sum((points[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
-            assignments = np.argmin(squared_distances, axis=1)
-            
-            self.iterations = iteration
-            
-            self.history.append({
-                "iteration": iteration,
-                "cluster_sizes": [int(np.count_nonzero(assignments == j)) for j in range(self.k)],
-            })
-
-            self.assignments = assignments
-            if previous is not None and np.array_equal(assignments, previous):
-                self.converged = True
-                break
-
-            for j in range(self.k):
-                members = points[assignments == j]
-
-                if len(members): 
-                    self.centroids[j] = members.mean(axis=0)
-
-            previous = assignments.copy()
-
-        self.clusters = [np.flatnonzero(self.assignments == j).tolist() for j in range(self.k)]
-        self.top_entries = []
-
-        for j, cluster in enumerate(self.clusters):
-            # Calculate each Pokemon's distance to its centroid
-            ranked_indices = sorted(
-                cluster,
-                key=lambda i: self.euclidean_distance(
-                    self.features[i],
-                    self.centroids[j]
-                )
-            )
-
-            top_five = []
-
-            for i in ranked_indices[:5]:
-                distance = self.euclidean_distance(
-                    self.features[i],
-                    self.centroids[j]
-                )
-
-                top_five.append({
-                    "name": self.names[i],
-                    "type": self.types[i],
-                    "cluster": j + 1,
-                    "distance": float(distance)
-                })
-
-            self.top_entries.append(top_five)
-
-        self.silhouette_score = self.calculate_silhouette()
-        self.cluster_types = self.label_clusters()
-        return self
-
-    def calculate_silhouette(self):
-        # Calculate the silhouette score for the clustering.
+    def evaluate_clusters(self, top_n=5):
+        # Evaluate the clusters: silhouette score, plus a summary and the
+        # top_n Pokémon closest to the centroid of each cluster.
         if self.assignments is None or self.centroids is None:
-            raise ValueError("Model must be fitted before calculating silhouette score")
+            raise ValueError("Model must be fitted before evaluating clusters")
 
+        # --- silhouette score ---
         X = self.features
         squared_norms = np.sum(X ** 2, axis=1)
         squared = np.maximum(
             squared_norms[:, None] + squared_norms[None, :] - 2 * np.dot(X, X.T), 0.0
         )
-
         distances = np.sqrt(squared)
-
         np.fill_diagonal(distances, 0.0)
 
         scores = np.zeros(len(X), dtype=float)
-
         nonempty = [group for group in self.clusters if group]
 
         if len(nonempty) < 2:
-            return 0.0
+            self.silhouette_score = 0.0
+        else:
+            for cluster in nonempty:
+                if len(cluster) <= 1:
+                    continue
 
-        for cluster in nonempty:
-            if len(cluster) <= 1:
-                continue
+                rows = np.array(cluster)
 
-            rows = np.array(cluster)
+                a = distances[np.ix_(rows, rows)].sum(axis=1) / (len(rows) - 1)
 
-            a = distances[np.ix_(rows, rows)].sum(axis=1) / (len(rows) - 1)
+                b = np.min(
+                    np.stack([
+                        distances[np.ix_(rows, other)].mean(axis=1)
+                        for other in nonempty if other is not cluster
+                    ], axis=1), axis=1,
+                )
 
-            b = np.min(
-                np.stack([
-                    distances[np.ix_(rows, other)].mean(axis=1)
-                    for other in nonempty if other is not cluster
-                ], axis=1), axis=1,
-            )
+                denom = np.maximum(a, b)
 
-            denom = np.maximum(a, b)
+                scores[rows] = np.divide(b - a, denom, out=np.zeros_like(a), where=denom > 0)
 
-            scores[rows] = np.divide(b - a, denom, out=np.zeros_like(a), where=denom > 0)
+            self.silhouette_score = float(scores.mean())
 
-        return float(scores.mean())
+        # --- per-cluster summary and top entries ---
+        self.top_entries = []
 
-    def summary(self, top_n=5):
-        # Return a summary of the clustering results, including top features and Pokémon in each cluster.
-        if self.assignments is None:
-            raise RuntimeError("Run fit() first")
-        
-        groups = []
+        for j, cluster in enumerate(self.clusters):
+            dists = np.linalg.norm(X[cluster] - self.centroids[j], axis=1) if cluster else np.array([])
+            order = np.argsort(dists, kind="stable")[:top_n]
 
-        for j, indices in enumerate(self.clusters):
-            top_indices = np.argsort(-self.centroids[j], kind="stable")[:top_n]
-
-            groups.append({
+            top = [{
+                "name": self.names[cluster[o]],
+                "type": self.types[cluster[o]],
                 "cluster": j + 1,
-                "count": len(indices),
-                "top_features": [self.feature_names[i] for i in top_indices],
-                "pokemon": [self.names[i] for i in indices],
-            })
+                "distance": float(dists[o]),
+            } for o in order]
+            self.top_entries.append(top)
 
-        return {
-            "total_pokemon": len(self.names),
-            "total_features": len(self.feature_names),
-            "k": self.k,
-            "iterations": self.iterations,
-            "converged": self.converged,
-            "iteration_history": self.history,
-            "overall_silhouette_score": self.silhouette_score,
-            "clusters": groups,
-        }
+            top_features = [self.feature_names[i] for i in np.argsort(-self.centroids[j], kind="stable")[:top_n]]
 
-    def save_assignments(self, output_path=None):
-        # Save the cluster assignments to a CSV file.
-        if self.assignments is None:
-            raise RuntimeError("Run fit() first")
-        
-        output = Path(output_path) if output_path else (
-            Path(__file__).resolve().parent.parent / "data" / "kmeans_clusters.csv"
-        )
+            print(f"\nCluster {j + 1} -> most common type: {self.cluster_types[j]} ({len(cluster)} Pokémon)")
+            print(f"  Top features: {', '.join(top_features)}")
+            for entry in top:
+                print(f"  {entry['name']} ({entry['type']}) - distance {entry['distance']:.4f}")
 
-        output.parent.mkdir(parents=True, exist_ok=True)
+        print(f"\nIterations: {self.iterations} (converged: {self.converged})")
+        print(f"Silhouette Score (train): {self.silhouette_score:.4f}")
 
-        with output.open("w", newline="", encoding="utf-8") as handle:
-            writer = csv.writer(handle)
-            writer.writerow(["name", "type_1", "cluster"])
-            for name, kind, cluster in zip(self.names, self.types, self.assignments):
-                writer.writerow([name, kind, int(cluster) + 1])
-
-        return output
-
-    def run_classifier(self):
-        print("Starting K-Means clustering...")
-
-        if self.features is None:
-            self.load_dataset()
+    def build(self, train: list, test: list, lookup: dict):
+        self.generate_train_test(train, test, lookup)
         self.fit()
+
+    def classify(self, evaluator: Evaluator):
         self.evaluate()
+        #self.evaluate_clusters()
 
-        '''
-        print(f"\nSilhouette Score (train): {model.silhouette_score:.4f}")
-        for j, label in enumerate(model.cluster_types):
-            print(f"Cluster {j + 1} -> most common type: {label}")
-        '''
-
-
-        self.evaluator.print_incorrect(self.incorrect)
+        evaluator.print_incorrect(self.incorrect)
 
         print("\nK-Means Classification Results")
-        print(f"k = {self.k}")
+        print("k =", self.k)
 
-        print(f"Number of clusters: {KMeans().k}")
-        total = len(self.names) + len(self.test_names)
-
-        self.evaluator.print_dataset_metrics(total, len(self.names), len(self.test_names))
-        self.evaluator.print_accuracy(self.correct_count, len(self.test_names))
-
-if __name__ == "__main__":
-    classifier = KMeans()
-    classifier.run_classifier()
+        evaluator.print_accuracy(self.correct_count, self.len_test_data)

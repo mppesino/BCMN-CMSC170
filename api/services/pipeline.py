@@ -2,6 +2,7 @@ from collections.abc import Callable
 
 from nb import NaiveBayes
 from knn import KNNClassifier
+from kmeans import KMeans
 
 from data import Data
 from pathlib import Path
@@ -38,7 +39,9 @@ class Pipeline:
         self.knn.build(self.onehot_train, self.onehot_test, self.onehot_header)
         self.knn.classify(self.ev)
 
-
+        self.kmeans = KMeans()
+        self.kmeans.build(self.onehot_train, self.onehot_test, self.onehot_header)
+        self.kmeans.classify(self.ev)
 
     def split_data(self, data, train_pct=0.70):
 
