@@ -1,5 +1,8 @@
 from collections.abc import Callable
+
 from nb import NaiveBayes
+from knn import KNNClassifier
+
 from data import Data
 from pathlib import Path
 from evaluator import Evaluator
@@ -20,16 +23,22 @@ class Pipeline:
         self.onehot_data = self.dt.load_csv(ONEHOT_KEEP_TYPE)
 
         self.cat_header = self.dt.build_header_lookup(self.cat_data)
-        self.onehot_header = self.dt.build_header_lookup(self.onehot_data)
+        self.onehot_header = self.dt.build_index_lookup(self.onehot_data)
 
         print(self.cat_header)
 
         self.cat_train, self.cat_test= self.split_data(self.cat_data)
         self.onehot_train, self.onehot_test  =  self.split_data(self.onehot_data)
 
-        self.nb = NaiveBayes(self.cat_header, self.cat_train, self.cat_test)
+        self.nb = NaiveBayes()
+        self.nb.build(self.cat_train, self.cat_test)
+        self.nb.classify(self.ev)
 
-        self.nb.run(self.ev)
+        self.knn = KNNClassifier()
+        self.knn.build(self.onehot_train, self.onehot_test, self.onehot_header)
+        self.knn.classify(self.ev)
+
+
 
     def split_data(self, data, train_pct=0.70):
 

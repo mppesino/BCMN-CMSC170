@@ -2,11 +2,12 @@
 import csv
 from evaluator import Evaluator
 
-class KNNclassifier:
+PREFIXES = ("is_ability_", "is_shape_", "is_color_")
+
+class KNNClassifier:
 
     #initialize the KNN classifier with k and p values
-    def __init__(self, train:list=None, test:list=None, k:int=3, p:int=1):
-        self.data = data
+    def __init__(self, k:int=3, p:int=1):
         self.k = k
         self.p = p
 
@@ -24,67 +25,27 @@ class KNNclassifier:
         self.len_test_data = 0
 
         self.evaluator = Evaluator()
+            
+    def generate_train_test(self, train: list, test: list, lookup: dict):
+        # lookup is {"column_name": index}
+        feature_idx = [i for name, i in lookup.items() if name.startswith(PREFIXES)]
+        type_idx = lookup["type_1"]
+        name_idx = lookup["name"]
+        id_idx = lookup["pokedex_id"]
 
-    #load the data from the CSV file and convert the features to be used in the KNN algorithm in the form of a list of floats
-    def load_data(self, filename):
-        data = []
+        for row in train:
+            self.X_training.append([float(row[i]) for i in feature_idx])
+            self.Y_training.append(row[type_idx])
 
-        with open(filename, "r") as file:
-            reader = csv.DictReader(file)
+        for row in test:
+            self.X_test.append([float(row[i]) for i in feature_idx])
+            self.Y_test.append(row[type_idx])
+            self.pokemon_names.append(row[name_idx])
+            self.pokemon_ids.append(row[id_idx])
 
-            for row in reader:
-                data.append(row)
-
-        for row in data:
-            for column in row:
-                if column.startswith("is_ability_") or column.startswith("is_shape_") or column.startswith("is_color_"):
-                    row[column] = float(row[column])
-
-        return data
-
-    #build the training and test sets from the loaded data
-    def build_training_and_test_sets(self, data):
-
-        training_data = []
-        test_data = []
-
-        #split the data into training and test sets (70% training, 30% testing)
-        total_training_data = int(len(data) * 0.70)
-
-        for i in range(len(data)):
-            if i < total_training_data:
-                training_data.append(data[i])
-            else:
-                test_data.append(data[i])
-
-        #build the training set
-        for row in training_data:
-            pokemon_features = []
-
-            for column in row:
-                if column.startswith("is_ability_") or column.startswith("is_shape_") or column.startswith("is_color_"):
-                    pokemon_features.append(row[column])
-
-            self.X_training.append(pokemon_features)
-            self.Y_training.append(row["type_1"])
-
-        #build the test set from the remaining data
-        for row in test_data:
-            pokemon_features = []
-
-            for column in row:
-                if column.startswith("is_ability_") or column.startswith("is_shape_") or column.startswith("is_color_"):
-                    pokemon_features.append(row[column])
-
-            self.pokemon_names.append(row["name"])
-            self.pokemon_ids.append(row["pokedex_id"])
-
-            self.X_test.append(pokemon_features)
-            self.Y_test.append(row["type_1"])
-
-        self.len_data = len(data)
-        self.len_train_data = len(training_data)
-        self.len_test_data = len(test_data)
+        self.len_train_data = len(train)
+        self.len_test_data = len(test)
+            
 
     #compute the Minkowski distance between two points
     def minkowski(self, p1, p2, p):
@@ -138,23 +99,7 @@ class KNNclassifier:
         return self.predict_type(neighbors)
 
     #main function to run the KNN classifier, prompts the user for values of k and p, and computes the classification accuracy on the test set
-    def run_knn(self):
-
-        while True:
-            k = int(input("Enter an odd value of k: "))
-
-            if k % 2 != 0:
-                break
-            else:
-                print("Please enter an ODD value.")
-
-        while True:
-            p = int(input("Enter the value of p for Minkowski distance: "))
-
-            if p > 0:
-                break
-            else:
-                print("Please enter a positive value.")
+    def classify(self, evaluator:Evaluator):
 
         correct = 0
         predictions = []
@@ -163,8 +108,8 @@ class KNNclassifier:
         for i in range(len(self.X_test)):
             prediction = self.knn(
                 self.X_test[i],
-                k,
-                p
+                self.k,
+                self.p
             )
 
             predictions.append(prediction)
@@ -181,21 +126,16 @@ class KNNclassifier:
 
         total = len(self.Y_test)
 
-        self.evaluator.print_incorrect(incorrect_predictions)
+        evaluator.print_incorrect(incorrect_predictions)
 
         print("\nKNN Classification Results")
-        print("k =", k)
-        print("p =", p)
+        print("k =", self.k)
+        print("p =", self.p)
 
-        self.evaluator.print_dataset_metrics(self.len_data, self.len_train_data, self.len_test_data)
-        self.evaluator.print_accuracy(correct, total)
+        evaluator.print_dataset_metrics(self.len_data, self.len_train_data, self.len_test_data)
+        evaluator.print_accuracy(correct, total)
+
+    def build(self, train:list, test:list, lookup:dict):
+        self.generate_train_test(train, test, lookup)
 
 
-
-classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
-
-data = classifier.load_data("../data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
-
-classifier.build_training_and_test_sets(data) #build the training and test sets from the loaded data
-
-classifier.run_knn() #perform the KNN classification on the test set and print the results

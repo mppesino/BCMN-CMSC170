@@ -8,18 +8,8 @@ This file contains the Naive Bayes algorithm for Pokelytics.
 
 class NaiveBayes:
 
-    def __init__(self, header:dict = None, train:list=None, test:list=None, smooth=1.0):
-
-        self.header_lookup = header
-
+    def __init__(self, smooth=1.0):
         self.smooth = smooth
-        # Training Data (70% of total data)
-        self.train_data = train
-        self.train_data_wcnt = len(self.train_data)
-
-        # Classification Data (30% of total data)
-        self.test_data = test
-        self.test_data_wcnt = 0
 
         # Naive Bayes Algorithm
         self.unique_cats = {}
@@ -127,7 +117,7 @@ class NaiveBayes:
         return self.unique_cats_NB
 
     #MAIN
-    def test(self, evaluator:Evaluator):
+    def classify(self, evaluator:Evaluator):
         total_predictions = 0
         correct_predictions = 0
         incorrect_predictions = []
@@ -158,7 +148,15 @@ class NaiveBayes:
 
         evaluator.print_accuracy(correct_predictions, total_predictions)
 
-    def run(self, evaluator:Evaluator):
+    def build(self, train:list, test:list):
+
+        # Training Data (70% of total data)
+        self.train_data = train
+        self.train_data_wcnt = len(self.train_data)
+
+        # Classification Data (30% of total data)
+        self.test_data = test
+        self.test_data_wcnt = 0
+
         self.generate_bow()
-        self.test(evaluator)
 
