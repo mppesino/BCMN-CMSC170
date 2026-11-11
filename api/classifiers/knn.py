@@ -190,6 +190,7 @@ class KNNclassifier:
         confusion_matrix = self.evaluator.save_type_confusion_matrix(all_predictions, label="KNN")
         mini_trix = self.evaluator.save_type_mini_trix_dictionary(all_predictions)
         self.evaluator.print_type_mini_trix_dictionary(mini_trix)
+        mean_f1_score, f1_scores = self.evaluator.print_eval_metrics(mini_trix)
 
         print("\nKNN Classification Results")
         print("k =", k)
@@ -204,7 +205,7 @@ class KNNclassifier:
 if __name__ == "__main__":
     classifier = KNNclassifier(0, 0) #initialize the KNN classifier with k and p values of 0, which will be set later by the user
 
-    data = classifier.load_data("../data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
+    data = classifier.load_data("./api/data/pokemon_onehot_keep_type.csv") #open the CSV file and load the data into a list of dictionaries
 
     classifier.build_training_and_test_sets(data) #build the training and test sets from the loaded data
 

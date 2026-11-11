@@ -330,6 +330,7 @@ class KMeans:
 
         self.evaluator.print_dataset_metrics(total, len(self.names), len(self.test_names))
         self.evaluator.print_accuracy(self.correct_count, len(self.test_names))
+        mean_f1_score, f1_scores = self.evaluator.print_eval_metrics(mini_trix)
         return confusion_matrix, mini_trix
 
 if __name__ == "__main__":

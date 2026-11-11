@@ -233,6 +233,7 @@ class NaiveBayes:
 
         self.evaluator.print_dataset_metrics(self.total_word_count, self.train_data_wcnt, self.classify_data_wcnt)
         self.evaluator.print_accuracy(correct_predictions, total_predictions)
+        mean_f1_score, f1_scores = self.evaluator.print_eval_metrics(mini_trix)
         return confusion_matrix, mini_trix
 
 # For running nb.py for testing

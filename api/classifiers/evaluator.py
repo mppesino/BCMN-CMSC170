@@ -145,4 +145,74 @@ class Evaluator():
 
     def save_type_dictionary(self, predictions, pokemon_types=None):
         return self.save_type_mini_trix_dictionary(predictions, pokemon_types)
+    
+    def recall(self, matrix):
+        tp = matrix[0][0]
+        fn = matrix[0][1]
 
+        if tp + fn == 0:
+            return 0
+
+        recall = tp / (tp + fn)
+        return recall
+
+    def precision(self, matrix):
+        tp = matrix[0][0]
+        fp = matrix[1][0]
+
+       
+
+        if tp + fp == 0:
+            return 0
+
+        precision = tp / (tp + fp)
+        return precision
+
+    def f1_score(self, recall, precision):
+
+        total_f1_score = 0
+
+        if recall + precision == 0:
+            return 0
+
+        total_f1_score = 2 * (precision * recall) / (precision + recall)
+
+        return total_f1_score
+
+
+    def f1_mean(self, mini_trix_list):
+        f1_scores = []
+        total_f1_score = 0
+
+        for entry in mini_trix_list:
+            for pokemon_type, matrix in entry.items():
+                recall = self.recall(matrix)
+                precision = self.precision(matrix)
+                f1_score = self.f1_score(recall, precision)
+                f1_scores.append(f1_score)
+                total_f1_score += f1_score
+
+        if len(f1_scores) == 0:
+            return 0, f1_scores
+
+        mean_f1_score = total_f1_score / len(f1_scores)
+
+        return mean_f1_score, f1_scores
+
+    def print_eval_metrics(self, mini_trix_list):
+        print("\nEvaluation Metrics:")
+        for entry in mini_trix_list:
+            for pokemon_type, matrix in entry.items():
+                recall = self.recall(matrix)
+                precision = self.precision(matrix)
+                f1_score = self.f1_score(recall, precision)
+
+                print(f"\n{pokemon_type}:")
+                print("Recall: ", recall)
+                print("Precision: ", precision)
+                print("F1 Score: ", f1_score)
+
+        print("\nMean F1 Score:", self.f1_mean(mini_trix_list)[0])
+        mean_f1_score, f1_scores = self.f1_mean(mini_trix_list)
+
+        return mean_f1_score, f1_scores
