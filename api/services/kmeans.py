@@ -223,13 +223,14 @@ class KMeans:
         self.generate_train_test(train, test, lookup)
         self.fit()
 
-    def classify(self, evaluator: Evaluator):
+    def classify(self, evaluator: Evaluator, print_incorrect:bool = False):
         self.evaluate()
         #self.evaluate_clusters()
 
-        evaluator.print_incorrect(self.incorrect)
+        if print_incorrect:
+            evaluator.print_incorrect(self.incorrect)
 
         print("\nK-Means Classification Results")
-        print("k =", self.k)
+        print("k:", self.k)
 
         evaluator.print_accuracy(self.correct_count, self.len_test_data)

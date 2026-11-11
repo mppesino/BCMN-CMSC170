@@ -26,22 +26,27 @@ class Pipeline:
         self.cat_header = self.dt.build_header_lookup(self.cat_data)
         self.onehot_header = self.dt.build_index_lookup(self.onehot_data)
 
-        print(self.cat_header)
-
         self.cat_train, self.cat_test= self.split_data(self.cat_data)
         self.onehot_train, self.onehot_test  =  self.split_data(self.onehot_data)
 
+        print("\n------------------------------------------")
+        self.ev.print_dataset_metrics(len(self.cat_data), len(self.cat_train), len(self.cat_test))
+
+        print("\n------------------------------------------")
         self.nb = NaiveBayes()
         self.nb.build(self.cat_train, self.cat_test)
         self.nb.classify(self.ev)
 
+        print("\n------------------------------------------")
         self.knn = KNNClassifier()
         self.knn.build(self.onehot_train, self.onehot_test, self.onehot_header)
         self.knn.classify(self.ev)
 
+        print("\n------------------------------------------")
         self.kmeans = KMeans()
         self.kmeans.build(self.onehot_train, self.onehot_test, self.onehot_header)
         self.kmeans.classify(self.ev)
+        print("\n------------------------------------------")
 
     def split_data(self, data, train_pct=0.70):
 

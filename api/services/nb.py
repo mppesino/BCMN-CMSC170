@@ -26,8 +26,6 @@ class NaiveBayes:
         # Generate unique categories from training data
         self.unique_cats = {}
         for i, row in enumerate(self.train_data):
-            print(row)
-            print(i)
             category = str(row[2]).strip().lower()
             if category not in self.unique_cats:
                 self.unique_cats[category] = {}
@@ -117,7 +115,7 @@ class NaiveBayes:
         return self.unique_cats_NB
 
     #MAIN
-    def classify(self, evaluator:Evaluator):
+    def classify(self, evaluator:Evaluator, print_incorrect:bool=False):
         total_predictions = 0
         correct_predictions = 0
         incorrect_predictions = []
@@ -141,11 +139,12 @@ class NaiveBayes:
                     'predicted': predicted,
                 })
 
-        evaluator.print_incorrect(incorrect_predictions)
+        if print_incorrect:
+            evaluator.print_incorrect(incorrect_predictions)
 
         print("\nNaive Bayes Classification Results")
         print(f"Smoothing Factor: {self.smooth}")
-
+        
         evaluator.print_accuracy(correct_predictions, total_predictions)
 
     def build(self, train:list, test:list):

@@ -99,7 +99,7 @@ class KNNClassifier:
         return self.predict_type(neighbors)
 
     #main function to run the KNN classifier, prompts the user for values of k and p, and computes the classification accuracy on the test set
-    def classify(self, evaluator:Evaluator):
+    def classify(self, evaluator:Evaluator, print_incorrect:bool = False):
 
         correct = 0
         predictions = []
@@ -126,13 +126,13 @@ class KNNClassifier:
 
         total = len(self.Y_test)
 
-        evaluator.print_incorrect(incorrect_predictions)
+        if print_incorrect:
+            evaluator.print_incorrect(incorrect_predictions)
 
         print("\nKNN Classification Results")
-        print("k =", self.k)
-        print("p =", self.p)
+        print("k:", self.k)
+        print("p:", self.p)
 
-        evaluator.print_dataset_metrics(self.len_data, self.len_train_data, self.len_test_data)
         evaluator.print_accuracy(correct, total)
 
     def build(self, train:list, test:list, lookup:dict):
