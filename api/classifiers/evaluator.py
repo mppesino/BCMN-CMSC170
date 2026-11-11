@@ -4,7 +4,9 @@ import numpy as np
 class Evaluator():
     def __init__(self):
         pass
-
+    
+    # Use this for Display Shortening so it dosen't clip and cook the terminal output
+    # Might be useful for text display in the future
     def normalize_type_name(self, value):
         if value is None:
             return ""
@@ -13,6 +15,7 @@ class Evaluator():
     def shorten_type_name(self, value, max_len=3):
         name = self.normalize_type_name(value)
         return name[:max_len] if name else ""
+
 
     def print_incorrect(self, incorrect:list):
         id = "ID"
@@ -53,6 +56,7 @@ class Evaluator():
         print(f"{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
         print(f"{correct:<15}{incorrect:<15}{total:<15}{str(round(self.get_accuracy(correct,total),2))+"%":<15}")
 
+    # Formats and Displays the 18 x 18 Matrix for each classifier in a Actual x Predicted format
     def save_type_confusion_matrix(self, predictions, pokemon_types=None, label="Pokemon Type"):
         if pokemon_types is None:
             pokemon_types = [
@@ -96,6 +100,8 @@ class Evaluator():
 
         return matrix_array
 
+
+    # Display Func for the 2x2 Matrixes
     def print_type_mini_trix_dictionary(self, mini_trix_list):
         print("\nMini-trix:")
         for entry in mini_trix_list:
@@ -103,6 +109,7 @@ class Evaluator():
                 print(f"\n{pokemon_type}:")
                 print(np.array(matrix, dtype=int))
 
+    # Gets the 2x2 Matrix of each pokemon type, instead of the 18x18 matrix u can just use the same source but just make it more detailed tbh 
     def save_type_mini_trix_dictionary(self, predictions, pokemon_types=None):
         if pokemon_types is None:
             pokemon_types = [
@@ -136,6 +143,6 @@ class Evaluator():
 
         return mini_trix_list
 
-    def save_type_lookup_dictionary(self, predictions, pokemon_types=None):
+    def save_type_dictionary(self, predictions, pokemon_types=None):
         return self.save_type_mini_trix_dictionary(predictions, pokemon_types)
 
