@@ -189,4 +189,5 @@ class Pipeline:
 if __name__ == "__main__":
     p = Pipeline()
     # p.grid_search()
+    p.run_best()
     p.compare_models()
