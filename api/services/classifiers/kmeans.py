@@ -200,20 +200,34 @@ class KMeans:
         print(f"\nIterations: {self.iterations} (converged: {self.converged})")
         print(f"Silhouette Score (train): {self.silhouette_score:.4f}")
 
+    def predict(self, x):
+        x = np.asarray(x, dtype=float)
+        single = x.ndim == 1
+        if single:
+            x = x[None, :]
+
+        # Squared Euclidean distance from each sample to each centroid -> (n, k)
+        sq = np.sum((x[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
+        clusters = np.argmin(sq, axis=1)
+
+        predicted = [self.cluster_types[c] for c in clusters]
+        return predicted[0] if single else predicted
+
     def evaluate(self, evaluator):
         # Assign each test Pokémon to its nearest centroid and predict that cluster's type
-        sq = np.sum((self.test_features[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
-        predicted_clusters = np.argmin(sq, axis=1)
+        predicted_types = self.predict(self.test_features)
 
-        predictions = []
-        for id, name, actual, c in zip(self.test_ids, self.test_names, self.test_types, predicted_clusters):
-            predicted = self.cluster_types[c]
-            predictions.append({
-                "id": id,
+        predictions = [
+            {
+                "id": id_,
                 "pokemon": name,
                 "actual": actual,
                 "predicted": predicted,
-            })
+            }
+            for id_, name, actual, predicted in zip(
+                self.test_ids, self.test_names, self.test_types, predicted_types
+            )
+        ]
 
         return evaluator.evaluate_metrics(predictions)
 

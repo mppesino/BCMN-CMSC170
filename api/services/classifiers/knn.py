@@ -98,16 +98,20 @@ class KNNClassifier:
 
         return self.predict_type(neighbors)
 
+
+    def predict(self, x):
+        knn = self.knn(
+            x,
+            self.k,
+            self.p
+        )
+        return knn
+    
     def evaluate(self, evaluator: Evaluator):
         predictions = []
 
         for i in range(len(self.X_test)):
-            knn = self.knn(
-                self.X_test[i],
-                self.k,
-                self.p
-            )
-
+            knn = self.predict(self.X_test[i])
             predictions.append({
                 'id': self.pokemon_ids[i],
                 "pokemon": self.pokemon_names[i],

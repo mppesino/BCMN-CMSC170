@@ -116,17 +116,20 @@ class NaiveBayes:
         self.unique_cats_NB = {cat: prob / total for cat, prob in probabilities.items()}
         return self.unique_cats_NB
 
+    def predict(self, x):
+        probabilities = self.bayes_theorem(self.get_words(x))
+        return max(probabilities, key=probabilities.get)
+
     def evaluate(self, evaluator: Evaluator):
         predictions = []
 
         for row in self.test_data:
-            probabilities = self.bayes_theorem(self.get_words(row))
 
             predictions.append({
                 "id": row[0].strip(),
                 "pokemon": row[1].strip(),
                 "actual": str(row[2]).strip().lower(),
-                "predicted": max(probabilities, key=probabilities.get),
+                "predicted": self.predict(row),
             })
 
         return evaluator.evaluate_metrics(predictions)
