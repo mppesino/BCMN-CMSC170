@@ -1,6 +1,6 @@
 from collections import Counter
 
-from evaluator import Evaluator
+from ..evaluator import Evaluator
 
 import numpy as np
 

@@ -1,5 +1,5 @@
 import numpy as np
-from utils import Utils
+from .utils import Utils
 
 class Evaluator():
     def __init__(self):

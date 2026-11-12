@@ -1,6 +1,6 @@
 
 import csv
-from evaluator import Evaluator
+from ..evaluator import Evaluator
 
 PREFIXES = ("is_ability_", "is_shape_", "is_color_")
 

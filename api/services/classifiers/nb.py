@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 
 import numpy as np
-from evaluator import Evaluator
+from ..evaluator import Evaluator
 
 '''
 This file contains the Naive Bayes algorithm for Pokelytics.

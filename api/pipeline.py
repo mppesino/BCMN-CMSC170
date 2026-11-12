@@ -1,15 +1,14 @@
 from collections.abc import Callable
 
-from classifiers.nb import NaiveBayes
-from classifiers.knn import KNNClassifier
-from classifiers.kmeans import KMeans
+from services.classifiers.nb import NaiveBayes
+from services.classifiers.knn import KNNClassifier
+from services.classifiers.kmeans import KMeans
 
-from data import Data
+from services.data import Data
 from pathlib import Path
-from evaluator import Evaluator
+from services.evaluator import Evaluator
 
-BASE_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = BASE_DIR / 'api' / 'data'
+DATA_DIR = Path(__file__).parent / 'data'
 CAT_BINNING = DATA_DIR / 'pokemon_categorical_binning.csv'
 ONEHOT_KEEP_TYPE = DATA_DIR / 'pokemon_onehot_keep_type.csv'
 
@@ -18,6 +17,7 @@ class Pipeline:
     def __init__(self):
         self.dt = Data()
         self.ev = Evaluator()
+
         
         self.cat_data = self.dt.load_csv(CAT_BINNING)
         self.onehot_data = self.dt.load_csv(ONEHOT_KEEP_TYPE)
