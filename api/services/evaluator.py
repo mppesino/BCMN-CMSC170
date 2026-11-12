@@ -18,7 +18,7 @@ class Evaluator():
                 correct.append(item)
 
         mini_trix = self.get_type_mini_trix_dictionary(predictions)
-        f1, means = self.get_mean_metrics(mini_trix)
+        per_type_f1, means = self.get_mean_metrics(mini_trix)
 
         n_correct = len(correct)
         n_incorrect = len(incorrect)
@@ -30,12 +30,15 @@ class Evaluator():
             "total": total,
             "correct":n_correct,
             "incorrect":n_incorrect,
-            "incorrect_array": incorrect,
             "acc": accuracy,
-            "f1": f1,
-            "means": means
+            "r": means["p"],
+            "p": means["r"],
+            "f1": means["f1"],
+            "inc_arr": incorrect,
+            "per_type_f1": per_type_f1
         }
-        return output 
+
+        return output
 
     # Formats and Displays the 18 x 18 Matrix for each classifier in a Actual x Predicted format
     def get_type_confusion_matrix(self, predictions, pokemon_types=None, label="Pokemon Type"):
@@ -161,25 +164,25 @@ class Evaluator():
         return total_f1_score
 
     def get_mean_metrics(self, mini_trix_list):
-        output = {}
+        per_type = {}
 
         for entry in mini_trix_list:
             for pokemon_type, matrix in entry.items():
                 recall = self.get_recall(matrix)
                 precision = self.get_precision(matrix)
                 f1 = self.get_f1_score(recall, precision)
-                output[pokemon_type] = {"r": recall, "p": precision, "f1": f1}
+                per_type[pokemon_type] = {"r": recall, "p": precision, "f1": f1}
 
-        n = len(output)
+        n = len(per_type)
         if n == 0:
-            return output, {"r": 0, "p": 0, "f1": 0}
+            return per_type, {"r": 0, "p": 0, "f1": 0}
 
         means = {
-            key: sum(scores[key] for scores in output.values()) / n
+            key: sum(scores[key] for scores in per_type.values()) / n
             for key in ("r", "p", "f1")
         }
 
-        return output, means
+        return per_type, means
 
     def print_accuracy(self, correct, total, accuracy):
         correct_lbl = "Correct"
@@ -192,7 +195,7 @@ class Evaluator():
         print(f"\n{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
         print(f"{correct:<15}{incorrect:<15}{total:<15}{str(round(accuracy,2))+"%":<15}")
 
-    def print_eval_metrics(self, f1_output, means):
+    def print_eval_metrics(self, f1_output, r, p, f1):
         recall_lbl = "Recall"
         precision_lbl = "Precision"
         f1_score_lbl = "F1 Score"
@@ -206,11 +209,11 @@ class Evaluator():
 
         #print(f"\nMean:")
         print(f"\n{recall_lbl:<15}{precision_lbl:<15}{f1_score_lbl}")
-        print(f"{round(means["r"],2):<15}{round(means["p"],2):<15}{round(means["f1"],2):<15}")
+        print(f"{round(r,2):<15}{round(p,2):<15}{round(f1,2):<15}")
 
     def print_all_metrics(self, output):
         self.print_accuracy(output["correct"], output["total"], output["acc"])
-        self.print_eval_metrics(output["f1"], output["means"])
+        self.print_eval_metrics(output["per_type_f1"], output["r"], output["p"],  output["f1"])
 
     def print_incorrect(self, incorrect:list):
         id = "ID"

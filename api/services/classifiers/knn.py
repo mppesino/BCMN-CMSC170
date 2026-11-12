@@ -124,7 +124,7 @@ class KNNClassifier:
         output = self.evaluate(evaluator)
 
         if print_incorrect:
-            evaluator.print_incorrect(output["incorrect_array"])
+            evaluator.print_incorrect(output["inc_arr"])
 
         print("\nKNN Classification Results")
         print("k:", self.k)

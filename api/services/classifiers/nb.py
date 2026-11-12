@@ -136,7 +136,7 @@ class NaiveBayes:
         output = self.evaluate(evaluator)
 
         if print_incorrect:
-            evaluator.print_incorrect(output["incorrect_array"])
+            evaluator.print_incorrect(output["inc_arr"])
 
         print("\nNaive Bayes Classification Results")
         print(f"Smoothing Factor: {self.smooth}")

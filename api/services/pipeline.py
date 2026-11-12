@@ -51,58 +51,58 @@ class Pipeline:
             and all(isinstance(row, list) for row in data)
         )
 
-    def grid_search_accuracy(self):
-        best_nb, score_nb = self.grid_search(
+    def grid_search(self):
+        best_nb, score_nb = self.tune(
             self.cat_train,
             [{"smooth": s} for s in (0.1, 0.5, 0.35, 0.40, 0.46, 0.47, 0.45, 0.25, 0.65, 0.75, 1.0, 2.0)],
             NaiveBayes,
-            NaiveBayes.evaluate_accuracy,
+            NaiveBayes.evaluate,
             self.ev
         )
         print(f"NB Best: {best_nb}, {score_nb}")
 
-        best_knn, score_knn = self.grid_search(
+        best_knn, score_knn = self.tune(
             self.onehot_train,
             [{"k": k} for k in (1, 3, 5, 7, 9, 11, 15, 21)],
             KNNClassifier,
-            KNNClassifier.evaluate_accuracy,
+            KNNClassifier.evaluate,
             self.ev,
             self.onehot_header
         )
         print(f"KNN Best: {best_knn}, {score_knn}")
 
-        best_km, score_km = self.grid_search(
+        best_km, score_km = self.tune(
             self.onehot_train,
             [{"k": k} for k in (18*1, 18*2, 18*3, 18*4, 18*5, 18*6, 18*7)],
             KMeans,
-            KMeans.evaluate_accuracy,
+            KMeans.evaluate,
             self.ev,
             self.onehot_header
         )
         print(f"KM Best: {best_km}, {score_km}")
  
-    def run_best(self):
+    def run_best(self, verbose=False):
         print("\n------------------------------------------")
         self.ev.print_dataset_metrics(len(self.cat_data), len(self.cat_train), len(self.cat_test))
 
         print("\n------------------------------------------")
         self.nb = NaiveBayes(NB_BEST_S)
         self.nb.build(self.cat_train, self.cat_test)
-        self.nb.classify(self.ev)
+        self.nb.classify(self.ev, verbose)
 
         print("\n------------------------------------------")
         self.knn = KNNClassifier(KNN_BEST_K)
         self.knn.build(self.onehot_train, self.onehot_test, self.onehot_header)
-        self.knn.classify(self.ev)
+        self.knn.classify(self.ev, verbose)
 
         print("\n------------------------------------------")
         self.kmeans = KMeans(KMEANS_BEST_K)
         self.kmeans.build(self.onehot_train, self.onehot_test, self.onehot_header)
-        self.kmeans.classify(self.ev)
+        self.kmeans.classify(self.ev, verbose)
         print("\n------------------------------------------")
 
     
-    def grid_search(self, train_data: list, hyperparams: list, classifier: type,
+    def tune(self, train_data: list, hyperparams: list, classifier: type,
                     metric: Callable, evaluator: Evaluator, *build_args, split: int = 5):
 
         folds = [train_data[i::split] for i in range(split)]
@@ -116,14 +116,19 @@ class Pipeline:
 
                 model = classifier(**params)
                 model.build(train_folds, val_fold, *build_args)
-                scores.append(metric(model, evaluator))
-
-            mean_score = sum(scores) / len(scores)
-            results.append((params, mean_score))
-            #print(f"[{n}/{len(hyperparams)}] {params} -> {mean_score:.4f}")
+                eval_output = metric(model, evaluator)
+                scores.append(eval_output["f1"])
+                
+            mean = sum(scores) / len(scores) if scores else 0
+                
+            results.append((params, mean))
 
         best_params, best_score = max(results, key=lambda r: r[1])
+        
         return best_params, best_score
+
+        #best_params, best_score = max(results, key=lambda r: r[1])
+        #return best_params, best_score
 
 
 p = Pipeline()
@@ -131,8 +136,8 @@ p = Pipeline()
 
 KMEANS_BEST_K = 108
 KNN_BEST_K = 1
-NB_BEST_S = 0.4
+NB_BEST_S = 0.1
 
-#p.grid_search_accuracy()
+#p.grid_search()
 p.run_best()
 

@@ -223,7 +223,7 @@ class KMeans:
         #self.evaluate_clusters()
 
         if print_incorrect:
-            evaluator.print_incorrect(output["incorrect_array"])
+            evaluator.print_incorrect(output["inc_arr"])
 
         print("\nK-Means Classification Results")
         print("k:", self.k)
