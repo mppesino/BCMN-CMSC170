@@ -243,6 +243,7 @@ class KMeans:
         print("k:", self.k)
 
         evaluator.print_all_metrics(output)
+        return output
 
 
     def build(self, train: list, test: list, lookup: dict):

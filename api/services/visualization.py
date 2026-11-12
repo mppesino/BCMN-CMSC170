@@ -1,8 +1,7 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-from evaluator import Evaluator
+from .evaluator import Evaluator
 from pathlib import Path
 
 
@@ -15,6 +14,8 @@ def bar_graph(results, save_path=None):
     2. Precision
     3. Recall
     4. F1-score
+
+    results: {algorithm: (18x18 confusion matrix, mini_trix list)}
     """
 
     evaluator = Evaluator()
@@ -38,29 +39,13 @@ def bar_graph(results, save_path=None):
 
         accuracy = correct / total if total else 0
 
-        # Precision and Recall using Bea's functions.
-        precisions = []
-        recalls = []
-
-        for entry in mini_trix:
-            for pokemon_type, type_matrix in entry.items():
-
-                precision = evaluator.precision(type_matrix)
-                recall = evaluator.recall(type_matrix)
-
-                precisions.append(precision)
-                recalls.append(recall)
-
-        mean_precision = np.mean(precisions) if precisions else 0
-        mean_recall = np.mean(recalls) if recalls else 0
-
-        # Mean F1 using Bea's function.
-        mean_f1, per_type_f1 = evaluator.f1_mean(mini_trix)
+        # Mean precision, recall, and F1 across the 18 types.
+        _, means = evaluator.get_mean_metrics(mini_trix)
 
         accuracy_scores.append(accuracy * 100)
-        precision_scores.append(mean_precision * 100)
-        recall_scores.append(mean_recall * 100)
-        f1_scores.append(mean_f1 * 100)
+        precision_scores.append(means["p"] * 100)
+        recall_scores.append(means["r"] * 100)
+        f1_scores.append(means["f1"] * 100)
 
     metrics = {
         "Accuracy": accuracy_scores,
@@ -108,9 +93,10 @@ def bar_graph(results, save_path=None):
     if save_path:
         fig.savefig(save_path, dpi=300, bbox_inches="tight")
 
-    plt.show()
+    #plt.show()
 
     return metrics
+
 
 def confusion_matrix_colored(
     confusion_matrix,
@@ -212,7 +198,7 @@ def confusion_matrix_colored(
 
         print(f"Confusion matrix saved to: {save_path}")
 
-    plt.show()
+    #plt.show()
     plt.close(fig)
 
     return fig

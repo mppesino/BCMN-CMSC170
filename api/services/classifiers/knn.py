@@ -135,6 +135,7 @@ class KNNClassifier:
         print("p:", self.p)
 
         evaluator.print_all_metrics(output)
+        return output
 
     def build(self, train:list, test:list, lookup:dict):
         self.generate_train_test(train, test, lookup)

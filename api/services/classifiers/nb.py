@@ -145,7 +145,7 @@ class NaiveBayes:
         print(f"Smoothing Factor: {self.smooth}")
         
         evaluator.print_all_metrics(output)
-
+        return output
     def build(self, train:list, test:list):
 
         # Training Data (70% of total data)

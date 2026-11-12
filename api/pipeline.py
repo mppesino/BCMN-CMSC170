@@ -1,16 +1,24 @@
 from collections.abc import Callable
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
 
 from services.classifiers.nb import NaiveBayes
 from services.classifiers.knn import KNNClassifier
 from services.classifiers.kmeans import KMeans
 
 from services.data import Data
-from pathlib import Path
 from services.evaluator import Evaluator
+from services.visualization import bar_graph, confusion_matrix_colored
 
 DATA_DIR = Path(__file__).parent / 'data'
 CAT_BINNING = DATA_DIR / 'pokemon_categorical_binning.csv'
 ONEHOT_KEEP_TYPE = DATA_DIR / 'pokemon_onehot_keep_type.csv'
+
+KMEANS_BEST_K = 108
+KNN_BEST_K = 1
+NB_BEST_S = 0.1
+
 
 class Pipeline:
 
@@ -18,16 +26,15 @@ class Pipeline:
         self.dt = Data()
         self.ev = Evaluator()
 
-        
         self.cat_data = self.dt.load_csv(CAT_BINNING)
         self.onehot_data = self.dt.load_csv(ONEHOT_KEEP_TYPE)
 
         self.cat_header = self.dt.build_header_lookup(self.cat_data)
         self.onehot_header = self.dt.build_index_lookup(self.onehot_data)
 
-        self.cat_train, self.cat_test= self.split_data(self.cat_data)
-        self.onehot_train, self.onehot_test  =  self.split_data(self.onehot_data)
-        
+        self.cat_train, self.cat_test = self.split_data(self.cat_data)
+        self.onehot_train, self.onehot_test = self.split_data(self.onehot_data)
+
     def split_data(self, data, train_pct=0.70):
 
         n_train = int(len(data) * train_pct)
@@ -80,30 +87,81 @@ class Pipeline:
             self.onehot_header
         )
         print(f"KM Best: {best_km}, {score_km}")
- 
+
     def run_best(self, verbose=False):
+        """
+        Runs all three classifiers with their best hyperparameters.
+        Returns a dict of name -> the output dict from Evaluator.evaluate_metrics
+        (assumes each classifier's classify() returns that dict).
+        """
+        outputs = {}
+
         print("\n------------------------------------------")
         self.ev.print_dataset_metrics(len(self.cat_data), len(self.cat_train), len(self.cat_test))
 
         print("\n------------------------------------------")
         self.nb = NaiveBayes(NB_BEST_S)
         self.nb.build(self.cat_train, self.cat_test)
-        self.nb.classify(self.ev, verbose)
+        outputs["Naive Bayes"] = self.nb.classify(self.ev, verbose)
 
         print("\n------------------------------------------")
         self.knn = KNNClassifier(KNN_BEST_K)
         self.knn.build(self.onehot_train, self.onehot_test, self.onehot_header)
-        self.knn.classify(self.ev, verbose)
+        outputs["KNN"] = self.knn.classify(self.ev, verbose)
 
         print("\n------------------------------------------")
         self.kmeans = KMeans(KMEANS_BEST_K)
         self.kmeans.build(self.onehot_train, self.onehot_test, self.onehot_header)
-        self.kmeans.classify(self.ev, verbose)
+        outputs["K-Means"] = self.kmeans.classify(self.ev, verbose)
         print("\n------------------------------------------")
 
-    
+        return outputs
+
+    def compare_models(self, quiet=True):
+        """
+        Runs KNN, K-Means, and Naive Bayes with their best hyperparameters,
+        then shows the bar graph comparison and one colored confusion
+        matrix per algorithm in pop-up windows. Each image is also saved
+        in the same folder as this file.
+        """
+        out_dir = Path(__file__).parent
+
+        print("\nRunning models...")
+        if quiet:
+            with redirect_stdout(StringIO()):
+                outputs = self.run_best()
+        else:
+            outputs = self.run_best()
+        print("Models completed.")
+
+        # Build (18x18 confusion matrix, per-type 2x2 matrices) per algorithm.
+        results = {}
+        for name, output in outputs.items():
+            preds = output["predictions"]
+            with redirect_stdout(StringIO()):  # get_type_confusion_matrix prints the matrix
+                cm = self.ev.get_type_confusion_matrix(preds)
+            mini_trix = self.ev.get_type_mini_trix_dictionary(preds)
+            results[name] = (cm, mini_trix)
+
+        # Bar graphs (accuracy, precision, recall, F1).
+        bar_graph(results, save_path=out_dir / "model_comparison.png")
+
+        # Colored confusion matrices, one window per algorithm.
+        for algorithm, (cm, _) in results.items():
+            filename = (
+                algorithm.lower().replace("-", "").replace(" ", "_")
+                + "_confusion_matrix.png"
+            )
+            confusion_matrix_colored(
+                cm,
+                algorithm=algorithm,
+                save_path=out_dir / filename
+            )
+
+        return results
+
     def tune(self, train_data: list, hyperparams: list, classifier: type,
-                    metric: Callable, evaluator: Evaluator, *build_args, split: int = 5):
+             metric: Callable, evaluator: Evaluator, *build_args, split: int = 5):
 
         folds = [train_data[i::split] for i in range(split)]
         results = []
@@ -118,26 +176,17 @@ class Pipeline:
                 model.build(train_folds, val_fold, *build_args)
                 eval_output = metric(model, evaluator)
                 scores.append(eval_output["f1"])
-                
+
             mean = sum(scores) / len(scores) if scores else 0
-                
+
             results.append((params, mean))
 
         best_params, best_score = max(results, key=lambda r: r[1])
-        
+
         return best_params, best_score
 
-        #best_params, best_score = max(results, key=lambda r: r[1])
-        #return best_params, best_score
 
-
-p = Pipeline()
-
-
-KMEANS_BEST_K = 108
-KNN_BEST_K = 1
-NB_BEST_S = 0.1
-
-#p.grid_search()
-p.run_best()
-
+if __name__ == "__main__":
+    p = Pipeline()
+    # p.grid_search()
+    p.compare_models()

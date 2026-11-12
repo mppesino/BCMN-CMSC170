@@ -4,7 +4,6 @@ from .utils import Utils
 class Evaluator():
     def __init__(self):
         self.utils = Utils()
-        pass
 
     def evaluate_metrics(self, predictions:list):
 
@@ -28,17 +27,22 @@ class Evaluator():
 
         output = {
             "total": total,
-            "correct":n_correct,
-            "incorrect":n_incorrect,
+            "correct": n_correct,
+            "incorrect": n_incorrect,
             "acc": accuracy,
-            "r": means["p"],
-            "p": means["r"],
+            "r": means["r"],
+            "p": means["p"],
             "f1": means["f1"],
             "inc_arr": incorrect,
-            "per_type_f1": per_type_f1
+            "per_type_f1": per_type_f1,
+            "predictions": predictions
         }
 
         return output
+
+    # Short label for the printed confusion matrix (e.g. "Normal" -> "Nor")
+    def shorten_type_name(self, name):
+        return str(name)[:3]
 
     # Formats and Displays the 18 x 18 Matrix for each classifier in a Actual x Predicted format
     def get_type_confusion_matrix(self, predictions, pokemon_types=None, label="Pokemon Type"):
@@ -92,7 +96,7 @@ class Evaluator():
                 print(f"\n{pokemon_type}:")
                 print(np.array(matrix, dtype=int))
 
-    # Gets the 2x2 Matrix of each pokemon type, instead of the 18x18 matrix u can just use the same source but just make it more detailed tbh 
+    # Gets the 2x2 Matrix of each pokemon type, instead of the 18x18 matrix u can just use the same source but just make it more detailed tbh
     def get_type_mini_trix_dictionary(self, predictions, pokemon_types=None):
         if pokemon_types is None:
             pokemon_types = [
@@ -131,7 +135,7 @@ class Evaluator():
 
     def get_accuracy(self, correct, total):
         return (correct / total)*100
-    
+
     def get_recall(self, matrix):
         tp = matrix[0][0]
         fn = matrix[0][1]
@@ -145,7 +149,7 @@ class Evaluator():
     def get_precision(self, matrix):
         tp = matrix[0][0]
         fp = matrix[1][0]
-       
+
         if tp + fp == 0:
             return 0
 
@@ -191,23 +195,16 @@ class Evaluator():
         acc_lbl = "Accuracy"
 
         incorrect = total-correct
+        acc_str = f"{round(accuracy, 2)}%"
 
         print(f"\n{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
-        print(f"{correct:<15}{incorrect:<15}{total:<15}{str(round(accuracy,2))+"%":<15}")
+        print(f"{correct:<15}{incorrect:<15}{total:<15}{acc_str:<15}")
 
     def print_eval_metrics(self, f1_output, r, p, f1):
         recall_lbl = "Recall"
         precision_lbl = "Precision"
         f1_score_lbl = "F1 Score"
 
-        '''
-        for k in f1_output.keys():
-            print(f"\n{k}:")
-            print(f"\n{recall_lbl:<15}{precision_lbl:<15}{f1_score_lbl}")
-            print(f"{round(f1_output[k]["r"],2):<15}{round(f1_output[k]["p"],2):<15}{round(f1_output[k]["f1"],2):<15}")
-        '''
-
-        #print(f"\nMean:")
         print(f"\n{recall_lbl:<15}{precision_lbl:<15}{f1_score_lbl}")
         print(f"{round(r,2):<15}{round(p,2):<15}{round(f1,2):<15}")
 
