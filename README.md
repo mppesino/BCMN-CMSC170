@@ -10,7 +10,7 @@
     - Create a Virtual Environment `python -m venv ./venv`
     - Activate Virtual Environment `venv\Scripts\activate`
     - Install Requirements `pip install -r requirements.txt`
-2. Pipeline (Algorithms Only)
+2. Pipeline (Algorithms, Evaluation Only)
     - Navigate to api folder `cd api`
     - Run Pipeline `python pipeline.py`
 3. API **Doesn't do anything yet, try running Pipeline*
