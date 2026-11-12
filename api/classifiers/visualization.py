@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from evaluator import Evaluator
+from pathlib import Path
 
 
 def bar_graph(results, save_path=None):
@@ -110,3 +111,108 @@ def bar_graph(results, save_path=None):
     plt.show()
 
     return metrics
+
+def confusion_matrix_colored(
+    confusion_matrix,
+    algorithm,
+    save_path=None
+):
+
+    pokemon_types = [
+        "Normal", "Fire", "Water", "Electric",
+        "Grass", "Ice", "Fighting", "Poison",
+        "Ground", "Flying", "Psychic", "Bug",
+        "Rock", "Ghost", "Dragon", "Dark",
+        "Steel", "Fairy"
+    ]
+
+    matrix = np.asarray(confusion_matrix)
+
+    if matrix.shape != (18, 18):
+        raise ValueError(
+            "Confusion matrix must have an 18x18 shape."
+        )
+
+    # Create the figure.
+    fig, ax = plt.subplots(figsize=(14, 12))
+
+    # Apply blue color weighting.
+    image = ax.imshow(
+        matrix,
+        interpolation="nearest",
+        cmap="Blues",
+        vmin=0
+    )
+
+    # Add a color scale.
+    colorbar = fig.colorbar(image, ax=ax)
+    colorbar.set_label("Number of Pokemon")
+
+    # Label the axes.
+    ax.set_xticks(np.arange(18))
+    ax.set_yticks(np.arange(18))
+
+    ax.set_xticklabels(pokemon_types)
+    ax.set_yticklabels(pokemon_types)
+
+    plt.setp(
+        ax.get_xticklabels(),
+        rotation=45,
+        ha="right",
+        rotation_mode="anchor"
+    )
+
+    ax.set_xlabel("Predicted Type", fontsize=12)
+    ax.set_ylabel("Actual Type", fontsize=12)
+
+    ax.set_title(
+        f"{algorithm} - Confusion Matrix",
+        fontsize=16,
+        fontweight="bold",
+        pad=20
+    )
+
+    # Display the numerical count in each cell.
+    threshold = matrix.max() / 2
+
+    for i in range(18):
+        for j in range(18):
+
+            value = int(matrix[i, j])
+
+            text_color = (
+                "white" if value > threshold else "black"
+            )
+
+            ax.text(
+                j,
+                i,
+                str(value),
+                ha="center",
+                va="center",
+                color=text_color,
+                fontsize=8
+            )
+
+    fig.tight_layout()
+
+    # Save the visualization if a path is provided.
+    if save_path:
+        save_path = Path(save_path)
+        save_path.parent.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+        fig.savefig(
+            save_path,
+            dpi=300,
+            bbox_inches="tight"
+        )
+
+        print(f"Confusion matrix saved to: {save_path}")
+
+    plt.show()
+    plt.close(fig)
+
+    return fig

@@ -7,8 +7,7 @@ from io import StringIO
 from knn import KNNclassifier
 from kmeans import KMeans
 from nb import NaiveBayes
-from visualization import bar_graph
-
+from visualization import bar_graph, confusion_matrix_colored
 
 # Get paths relative to this script.
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -69,6 +68,37 @@ def main():
 
     print(f"Graph saved to: {OUTPUT}")
 
+    bar_graph(
+        results,
+        save_path=OUTPUT
+    )
+
+    print(f"Graph saved to: {OUTPUT}")
+
+    # 5. Generate colored confusion matrices
+    print("\nGenerating colored confusion matrices...")
+
+    for algorithm, classifier_results in results.items():
+
+        # (18x18 confusion matrix, 2x2 matrices per type)
+        confusion_matrix, mini_trix = classifier_results
+
+        filename = (
+            algorithm.lower()
+            .replace("-", "")
+            .replace(" ", "_")
+            + "_confusion_matrix.png"
+        )
+
+        output_path = BASE_DIR / "outputs" / filename
+
+        confusion_matrix_colored(
+            confusion_matrix,
+            algorithm=algorithm,
+            save_path=output_path
+        )
+
+    print("\nAll visualizations generated successfully.")
 
 if __name__ == "__main__":
     main()
