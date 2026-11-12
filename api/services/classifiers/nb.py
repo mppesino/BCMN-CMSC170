@@ -116,74 +116,32 @@ class NaiveBayes:
         self.unique_cats_NB = {cat: prob / total for cat, prob in probabilities.items()}
         return self.unique_cats_NB
 
-    #MAIN
-    def evaluate_accuracy(self, evaluator:Evaluator):
-        total_predictions = 0
-        correct_predictions = 0
-        incorrect_predictions = []
-        all_predictions = []
+    def evaluate(self, evaluator: Evaluator):
+        predictions = []
 
         for row in self.test_data:
-            row_words = self.get_words(row)
-            probabilities = self.bayes_theorem(row_words)
-            self.unique_cats_NB = probabilities
+            probabilities = self.bayes_theorem(self.get_words(row))
 
-            predicted = max(probabilities, key=probabilities.get)
-            actual = str(row[2]).strip().lower()
-            all_predictions.append({
-                'actual': actual,
-                'predicted': predicted,
+            predictions.append({
+                "id": row[0].strip(),
+                "pokemon": row[1].strip(),
+                "actual": str(row[2]).strip().lower(),
+                "predicted": max(probabilities, key=probabilities.get),
             })
-            is_correct = predicted == actual
-            total_predictions += 1
-            if is_correct:
-                correct_predictions += 1
-            else:
-                incorrect_predictions.append({
-                    'pokemon': row[1].strip(),
-                    'actual': actual,
-                    'predicted': predicted,
-                })
-        #For Computing the accuracy of the Algorithm
-        accuracy = (correct_predictions / total_predictions) * 100
-        print(f"Total Data Count: {self.total_word_count}")
-        print(f"Training Data Count: {self.train_data_wcnt}")
-        print(f"Classify Data Count: {self.classify_data_wcnt} \n")
-        print(f"Smoothing Factor: {self.smooth}\n\n")
 
-        return evaluator.get_accuracy(correct_predictions, total_predictions)
-  
+        return evaluator.evaluate_metrics(predictions)
+
     def classify(self, evaluator:Evaluator, print_incorrect:bool=False):
-        total_predictions = 0
-        correct_predictions = 0
-        incorrect_predictions = []
 
-        for row in self.test_data:
-            row_words = self.get_words(row)
-            probabilities = self.bayes_theorem(row_words)
-            self.unique_cats_NB = probabilities
-
-            predicted = max(probabilities, key=probabilities.get)
-            actual = str(row[2]).strip().lower()
-            is_correct = predicted == actual
-            total_predictions += 1
-            if is_correct:
-                correct_predictions += 1
-            else:
-                incorrect_predictions.append({
-                    'id': row[0].strip(),
-                    'pokemon': row[1].strip(),
-                    'actual': actual,
-                    'predicted': predicted,
-                })
+        output = self.evaluate(evaluator)
 
         if print_incorrect:
-            evaluator.print_incorrect(incorrect_predictions)
+            evaluator.print_incorrect(output["incorrect_array"])
 
         print("\nNaive Bayes Classification Results")
         print(f"Smoothing Factor: {self.smooth}")
         
-        evaluator.print_accuracy(correct_predictions, total_predictions)
+        evaluator.print_all_metrics(output)
 
     def build(self, train:list, test:list):
 

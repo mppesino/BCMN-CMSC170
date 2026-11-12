@@ -1,8 +1,8 @@
 from collections.abc import Callable
 
-from nb import NaiveBayes
-from knn import KNNClassifier
-from kmeans import KMeans
+from classifiers.nb import NaiveBayes
+from classifiers.knn import KNNClassifier
+from classifiers.kmeans import KMeans
 
 from data import Data
 from pathlib import Path

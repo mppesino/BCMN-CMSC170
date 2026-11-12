@@ -132,25 +132,6 @@ class KMeans:
         self.clusters = [np.flatnonzero(self.assignments == j).tolist() for j in range(self.k)]
         self.cluster_types = self.label_clusters()
 
-    def evaluate(self):
-        # Assign each test Pokémon to its nearest centroid and predict that cluster's type
-        sq = np.sum((self.test_features[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
-        predicted_clusters = np.argmin(sq, axis=1)
-
-        self.correct_count = 0
-        self.incorrect = []
-
-        for id, name, actual, c in zip(self.test_ids, self.test_names, self.test_types, predicted_clusters):
-            predicted = self.cluster_types[c]
-            if predicted == actual:
-                self.correct_count += 1
-            else:
-                self.incorrect.append({
-                    "id": id,
-                    "pokemon": name,
-                    "actual": actual,
-                    "predicted": predicted,
-                })
 
     def evaluate_clusters(self, top_n=5):
         # Evaluate the clusters: silhouette score, plus a summary and the
@@ -219,22 +200,38 @@ class KMeans:
         print(f"\nIterations: {self.iterations} (converged: {self.converged})")
         print(f"Silhouette Score (train): {self.silhouette_score:.4f}")
 
-    def build(self, train: list, test: list, lookup: dict):
-        self.generate_train_test(train, test, lookup)
-        self.fit()
+    def evaluate(self, evaluator):
+        # Assign each test Pokémon to its nearest centroid and predict that cluster's type
+        sq = np.sum((self.test_features[:, None, :] - self.centroids[None, :, :]) ** 2, axis=2)
+        predicted_clusters = np.argmin(sq, axis=1)
 
-    def evaluate_accuracy(self, evaluator:Evaluator):
-        self.evaluate()
-        return evaluator.get_accuracy(self.correct_count, self.len_test_data)
-    
+        predictions = []
+        for id, name, actual, c in zip(self.test_ids, self.test_names, self.test_types, predicted_clusters):
+            predicted = self.cluster_types[c]
+            predictions.append({
+                "id": id,
+                "pokemon": name,
+                "actual": actual,
+                "predicted": predicted,
+            })
+
+        return evaluator.evaluate_metrics(predictions)
+
+
     def classify(self, evaluator: Evaluator, print_incorrect:bool = False):
-        self.evaluate()
+        output = self.evaluate(evaluator)
         #self.evaluate_clusters()
 
         if print_incorrect:
-            evaluator.print_incorrect(self.incorrect)
+            evaluator.print_incorrect(output["incorrect_array"])
 
         print("\nK-Means Classification Results")
         print("k:", self.k)
 
-        evaluator.print_accuracy(self.correct_count, self.len_test_data)
+        evaluator.print_all_metrics(output)
+
+
+    def build(self, train: list, test: list, lookup: dict):
+        self.generate_train_test(train, test, lookup)
+        self.fit()
+    
