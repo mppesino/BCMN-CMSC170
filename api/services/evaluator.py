@@ -20,14 +20,14 @@ class Evaluator():
     def print_incorrect(self, incorrect:list):
         id = "ID"
         pokemon_title = "Pokemon"
-        actual = "Predicted Type"
-        predicted = "Actual Type"
+        predicted = "Predicted Type"
+        actual = "Actual Type"
         print("\nIncorrect Classifications: \n")
         if incorrect:
             print(f"{id:<5}{pokemon_title:<30}{predicted:<30}{actual:<30}")
             print("-----------------------------------------------------------------------------------")
             for pokemon in incorrect:
-                print(f"{pokemon['id']:<5}{pokemon['pokemon']:<30}{pokemon['actual']:<30}{pokemon['predicted']:<30}")
+                print(f"{pokemon['id']:<5}{pokemon['pokemon']:<30}{pokemon['predicted']:<30}{pokemon['actual']:<30}")
             print("-----------------------------------------------------------------------------------")
             print(f"{id:<5}{pokemon_title:<30}{predicted:<30}{actual:<30}")
 
@@ -39,13 +39,12 @@ class Evaluator():
         print("\nDataset Metrics:\n")
         print(f"Total Data Count: {total_data}")
         print(f"Training Data Count: {n_training_data}")
-        print(f"Classify Data Count: {n_classify_data}\n")
+        print(f"Classify Data Count: {n_classify_data}")
 
     def get_accuracy(self, correct, total):
         return (correct / total)*100
 
     def print_accuracy(self, correct, total):
-        print("\nAccuracy:\n")
         correct_lbl = "Correct"
         incorrect_lbl = "Incorrect"
         total_lbl = "Total"
@@ -53,7 +52,7 @@ class Evaluator():
 
         incorrect = total-correct
 
-        print(f"{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
+        print(f"\n{correct_lbl:<15}{incorrect_lbl:<15}{total_lbl:<15}{acc_lbl:<15}")
         print(f"{correct:<15}{incorrect:<15}{total:<15}{str(round(self.get_accuracy(correct,total),2))+"%":<15}")
 
     # Formats and Displays the 18 x 18 Matrix for each classifier in a Actual x Predicted format
@@ -216,3 +215,4 @@ class Evaluator():
         mean_f1_score, f1_scores = self.f1_mean(mini_trix_list)
 
         return mean_f1_score, f1_scores
+ 

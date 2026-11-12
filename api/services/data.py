@@ -36,3 +36,6 @@ class Data:
                 header[j] = row
         return header
 
+    def build_index_lookup(self, data: list):
+        # returns {"pokemon_name": 0, "type_1": 1, ...}
+        return {name: i for i, name in enumerate(data[0])}

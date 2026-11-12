@@ -10,26 +10,20 @@ This file contains the Naive Bayes algorithm for Pokelytics.
 
 class NaiveBayes:
 
-    def __init__(self, data=None, smooth=1.0): #use pokemon_onehot_keep_type.csv here
-        # Initalize data list
-        self.data = data
-        self.columns = []
-        self.total_word_count = len(data) if data is not None else 0
-        # Training Data (70% of total data)
-        self.train_data = []
-        self.train_data_wcnt = 0
-        # Classification Data (30% of total data)
-        self.classify_data = []
-        self.classify_data_wcnt = 0
+    def __init__(self, smooth=1.0):
+        self.smooth = smooth
+
         # Naive Bayes Algorithm
         self.unique_cats = {}
         self.unique_cats_prob = {}
         self.unique_cats_prob_xy = {}
         self.unique_cats_NB = {}
+        
         # Extra Variables
         self.unique_words = []
         self.category_word_totals = {}
         self.class_counts = {}
+<<<<<<< HEAD:api/classifiers/nb.py
         self.smooth = smooth
         self.evaluator = Evaluator()
 
@@ -61,13 +55,13 @@ class NaiveBayes:
         self.classify_data = self.data[split_index:] # other 30%
         self.train_data_wcnt = len(self.train_data)
         self.classify_data_wcnt = len(self.classify_data)
+=======
+>>>>>>> main:api/services/nb.py
 
     def generate_cats(self):
         # Generate unique categories from training data
         self.unique_cats = {}
-        for row in self.train_data:
-            if not row or row[0] == 'pokedex_id':
-                continue
+        for i, row in enumerate(self.train_data):
             category = str(row[2]).strip().lower()
             if category not in self.unique_cats:
                 self.unique_cats[category] = {}
@@ -86,9 +80,7 @@ class NaiveBayes:
     def generate_training_data(self):
         # generates the training data for naive bayes
         self.generate_cats()
-        for row in self.train_data:
-            if not row or row[0] == 'pokedex_id':
-                continue
+        for i, row in enumerate(self.train_data):
             category = str(row[2]).strip().lower()
             for word in self.get_words(row):
                 self.unique_cats[category][word] = self.unique_cats[category].get(word, 0) + 1
@@ -159,24 +151,13 @@ class NaiveBayes:
         return self.unique_cats_NB
 
     #MAIN
-    def naive_bayes(self, data=None):
-        if data is not None:
-            self.data = data
-            self.total_word_count = len(data)
-
-        if not self.train_data and not self.classify_data:
-            self.split_data()
-
-        self.generate_bow()
-
+    def evaluate_accuracy(self, evaluator:Evaluator):
         total_predictions = 0
         correct_predictions = 0
         incorrect_predictions = []
         all_predictions = []
 
-        for row in self.classify_data:
-            if not row or row[0] == 'pokedex_id':
-                continue
+        for row in self.test_data:
             row_words = self.get_words(row)
             probabilities = self.bayes_theorem(row_words)
             self.unique_cats_NB = probabilities
@@ -204,6 +185,7 @@ class NaiveBayes:
         print(f"Classify Data Count: {self.classify_data_wcnt} \n")
         print(f"Smoothing Factor: {self.smooth}\n\n")
 
+<<<<<<< HEAD:api/classifiers/nb.py
         print(f"No. of Correct Predictions: {correct_predictions}")
         print(f"No. of Incorrect Predictions: {total_predictions - correct_predictions}")
         print(f"Classification Acc%: {accuracy:.2f}% \n\n")
@@ -227,10 +209,43 @@ class NaiveBayes:
         confusion_matrix = self.evaluator.save_type_confusion_matrix(all_predictions, label="Naive Bayes")
         mini_trix = self.evaluator.save_type_mini_trix_dictionary(all_predictions)
         self.evaluator.print_type_mini_trix_dictionary(mini_trix)
+=======
+        return evaluator.get_accuracy(correct_predictions, total_predictions)
+  
+    def classify(self, evaluator:Evaluator, print_incorrect:bool=False):
+        total_predictions = 0
+        correct_predictions = 0
+        incorrect_predictions = []
+
+        for row in self.test_data:
+            row_words = self.get_words(row)
+            probabilities = self.bayes_theorem(row_words)
+            self.unique_cats_NB = probabilities
+
+            predicted = max(probabilities, key=probabilities.get)
+            actual = str(row[2]).strip().lower()
+            is_correct = predicted == actual
+            total_predictions += 1
+            if is_correct:
+                correct_predictions += 1
+            else:
+                incorrect_predictions.append({
+                    'id': row[0].strip(),
+                    'pokemon': row[1].strip(),
+                    'actual': actual,
+                    'predicted': predicted,
+                })
+
+        if print_incorrect:
+            evaluator.print_incorrect(incorrect_predictions)
+>>>>>>> main:api/services/nb.py
 
         print("\nNaive Bayes Classification Results")
         print(f"Smoothing Factor: {self.smooth}")
+        
+        evaluator.print_accuracy(correct_predictions, total_predictions)
 
+<<<<<<< HEAD:api/classifiers/nb.py
         self.evaluator.print_dataset_metrics(self.total_word_count, self.train_data_wcnt, self.classify_data_wcnt)
         self.evaluator.print_accuracy(correct_predictions, total_predictions)
         mean_f1_score, f1_scores = self.evaluator.print_eval_metrics(mini_trix)
@@ -242,6 +257,17 @@ if __name__ == "__main__":
         smoothing = float(input("Enter smoothing factor: "))
     except ValueError:
         smoothing = 1.0
+=======
+    def build(self, train:list, test:list):
 
-    model = NaiveBayes(smooth=smoothing)
-    model.naive_bayes()
+        # Training Data (70% of total data)
+        self.train_data = train
+        self.train_data_wcnt = len(self.train_data)
+
+        # Classification Data (30% of total data)
+        self.test_data = test
+        self.test_data_wcnt = 0
+
+        self.generate_bow()
+>>>>>>> main:api/services/nb.py
+
